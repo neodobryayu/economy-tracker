@@ -229,7 +229,7 @@
 
 <div id="add-form" class="screen">
     <div class="form-card">
-        <h2 id="formTitle">Новая причина экономии</h2>
+        <h2 id="formTitle">На чем экономим?</h2>
         <div class="label">Название:</div>
         <input type="text" id="habitName" placeholder="Например: Кофе с собой">
         <div class="label">Дата старта:</div>
@@ -829,7 +829,7 @@
         else currentHabits.push({ name, date: selectedDateValue, amount });
         syncToCloud();
         document.getElementById('habitName').value = ''; document.getElementById('dailyAmount').value = '';
-        document.getElementById('formTitle').textContent = 'Новая причина экономии';
+        document.getElementById('formTitle').textContent = 'На чем экономим?';
         editingIndex = null;
         renderDashboard();
     }
@@ -855,7 +855,7 @@
         editingImpulseIndex = null;
         document.getElementById('impulseName').value = ''; 
         document.getElementById('impulseAmount').value = '';
-        document.getElementById('impulseFormTitle').textContent = 'Молодец! Что не купили?';
+        document.getElementById('impulseFormTitle').textContent = 'Так держать! Что не купили?';
         switchScreen('impulse-form'); 
     }
     function editImpulse(index) {
