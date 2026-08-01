@@ -77,6 +77,10 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
+    // СЮДА ВСТАВЬТЕ ССЫЛКУ ИЗ FIREBASE (обязательно с /habits.json на конце)
+    // Пример: const FIREBASE_URL = 'https://my-project-default-rtdb.firebaseio.com/habits';
+    const FIREBASE_URL = 'https://economy-tracker-f8842-default-rtdb.firebaseio.com/'; 
+
     const dashboard = document.getElementById('dashboard');
     const addForm = document.getElementById('add-form');
     const habitsListEl = document.getElementById('habitsList');
@@ -84,17 +88,62 @@
     const totalSavedAmountEl = document.getElementById('totalSavedAmount');
 
     let editingIndex = null;
+    let currentHabits = [];
 
+    // Получаем уникальный ID пользователя Telegram
+    function getUserId() {
+        return tg.initDataUnsafe?.user?.id || 'test_user_pc';
+    }
+
+    // Загрузка данных из Firebase при старте
     function loadApp() {
-        const habits = JSON.parse(localStorage.getItem('userHabits')) || [];
-        if (habits.length > 0) {
-            renderHabits(habits);
+        const userId = getUserId();
+        
+        if (FIREBASE_URL.includes('ВАША_ССЫЛКА')) {
+            // Резервный режим, если ссылку еще не вставили
+            currentHabits = JSON.parse(localStorage.getItem('userHabits')) || [];
+            handleHabitsLoaded();
+            return;
+        }
+
+        fetch(`${FIREBASE_URL}/${userId}.json`)
+            .then(res => res.json())
+            .then(data => {
+                currentHabits = data || [];
+                localStorage.setItem('userHabits', JSON.stringify(currentHabits));
+                handleHabitsLoaded();
+            })
+            .catch(err => {
+                console.log('Ошибка загрузки из облака, берем локальные', err);
+                currentHabits = JSON.parse(localStorage.getItem('userHabits')) || [];
+                handleHabitsLoaded();
+            });
+    }
+
+    function handleHabitsLoaded() {
+        if (currentHabits.length > 0) {
+            renderHabits(currentHabits);
             showDashboard();
         } else {
             showAddForm();
             const cancelBtn = document.querySelector('#add-form button:last-child');
             if(cancelBtn) cancelBtn.style.display = 'none';
         }
+    }
+
+    // Синхронизация данных с Firebase в реальном времени
+    function syncToCloud(habits) {
+        currentHabits = habits;
+        localStorage.setItem('userHabits', JSON.stringify(habits));
+
+        if (FIREBASE_URL.includes('ВАША_ССЫЛКА')) return;
+
+        const userId = getUserId();
+        fetch(`${FIREBASE_URL}/${userId}.json`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(habits)
+        }).catch(err => console.log('Ошибка синхронизации с облаком'));
     }
 
     function toggleHabit(element) {
@@ -135,17 +184,16 @@
     function deleteHabit(index) {
         tg.showConfirm('Точно удалить этот трекер?', function(confirmed) {
             if (confirmed) {
-                let habits = JSON.parse(localStorage.getItem('userHabits')) || [];
+                let habits = [...currentHabits];
                 habits.splice(index, 1);
-                localStorage.setItem('userHabits', JSON.stringify(habits));
+                syncToCloud(habits);
                 loadApp();
             }
         });
     }
 
     function editHabit(index) {
-        const habits = JSON.parse(localStorage.getItem('userHabits')) || [];
-        const habit = habits[index];
+        const habit = currentHabits[index];
         document.getElementById('habitName').value = habit.name;
         document.getElementById('startDate').value = habit.date;
         document.getElementById('dailyAmount').value = habit.amount;
@@ -210,7 +258,7 @@
 
         if (!name || !date || !amount) { tg.showAlert('Пожалуйста, заполните все поля!'); return; }
 
-        const habits = JSON.parse(localStorage.getItem('userHabits')) || [];
+        let habits = [...currentHabits];
         if (editingIndex !== null) {
             habits[editingIndex] = { name: name, date: date, amount: amount };
             editingIndex = null;
@@ -218,7 +266,7 @@
             habits.push({ name: name, date: date, amount: amount });
         }
 
-        localStorage.setItem('userHabits', JSON.stringify(habits));
+        syncToCloud(habits);
         
         document.getElementById('habitName').value = '';
         document.getElementById('startDate').value = '';
@@ -235,8 +283,7 @@
     }
 
     function showDashboard() {
-        const habits = JSON.parse(localStorage.getItem('userHabits')) || [];
-        if (habits.length === 0) return; 
+        if (currentHabits.length === 0) return; 
         editingIndex = null;
         addForm.classList.remove('active');
         dashboard.classList.add('active');
