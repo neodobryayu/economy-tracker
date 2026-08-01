@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Трекер отказа</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 16px; color: #2c3e50; }
+        .action-btn { background-color: #ffffff; color: #2c3e50; border-radius: 20px; text-align: center; padding: 16px; font-size: 17px; font-weight: 600; box-sizing: border-box; width: 100%; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03); border: none; cursor: pointer; transition: background-color 0.2s, transform 0.1s; }
+        .action-btn:active { transform: scale(0.98); }
+        
+        .total-card { background-color: #ffffff; border-radius: 20px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); text-align: center; }
+        .total-title { font-size: 14px; font-weight: 500; color: #7f8c8d; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .total-amount { color: #2c3e50; font-size: 32px; font-weight: 700; line-height: 1.2; }
+        
+        #habitsList { display: flex; flex-direction: column; gap: 16px; }
+        .habit-card { background-color: #ffffff; border-radius: 20px; padding: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); -webkit-touch-callout: none; user-select: none; }
+        .habit-title-bar { background-color: #f8f9fa; color: #2c3e50; border-radius: 14px; text-align: center; padding: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background-color 0.2s; }
+        .habit-title-bar:active { background-color: #f1f3f5; }
+        
+        .arrow-icon { font-size: 12px; color: #95a5a6; transition: transform 0.3s ease; }
+        .habit-content { max-height: 300px; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease; opacity: 1; display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+        .habit-card.collapsed .habit-content { max-height: 0; opacity: 0; margin-top: 0; }
+        .habit-card.collapsed .arrow-icon { transform: rotate(-90deg); }
+        
+        .habit-stats-row { display: flex; gap: 12px; }
+        .stat-box { flex: 1; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 10px; text-align: center; position: relative; overflow: hidden; }
+        .stat-days { background-color: #e8f5e9; color: #2e7d32; }
+        .stat-money { background-color: #fff8e1; color: #f57f17; }
+        .stat-label { font-size: 12px; font-weight: 500; margin-bottom: 6px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
+        .stat-value { font-size: 26px; font-weight: 700; line-height: 1.2; }
+        
+        .form-card { background-color: #ffffff; border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); }
+        .form-card h2 { margin-top: 0; color: #2c3e50; font-size: 20px;}
+        .label { font-size: 14px; color: #7f8c8d; font-weight: 500; text-align: left; margin-bottom: 6px; }
+        
+        input, select { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; appearance: none; }
+        input:focus, select:focus { border-color: #3498db; }
+        
+        .btn-primary { background-color: #2c3e50; color: #ffffff; }
+        .btn-secondary { background-color: transparent; color: #7f8c8d; border: 1px solid #e2e8f0; margin-top: 12px; }
+        
+        #dashboard, #add-form, #settings-form { display: none; }
+        .active { display: block !important; }
+    </style>
+</head>
+<body>
+
+<div id="dashboard">
+    <div class="total-card" id="totalCardContainer" style="display: none;">
+        <div class="total-title">Общая экономия</div>
+        <div class="total-amount" id="totalSavedAmount">0 ₽</div>
+    </div>
+    
+    <div id="habitsList" style="margin-bottom: 16px;"></div>
+    
+    <button class="action-btn btn-primary" onclick="showAddForm()">Добавить трекер</button>
+    <button class="action-btn btn-secondary" onclick="showSettings()">Настройка уведомлений</button>
+</div>
+
+<!-- Экран добавления привычки -->
+<div id="add-form">
+    <div class="form-card">
+        <h2 id="formTitle">Новая причина экономии</h2>
+        <div class="label">Название:</div>
+        <input type="text" id="habitName" placeholder="Например: Кофе с собой">
+        <div class="label">Дата старта:</div>
+        <input type="date" id="startDate">
+        <div class="label">Экономия в день (₽):</div>
+        <input type="number" id="dailyAmount" placeholder="Например: 200">
+        <button class="action-btn btn-primary" onclick="saveHabit()">Сохранить</button>
+        <button class="action-btn btn-secondary" onclick="showDashboard()">Назад</button>
+    </div>
+</div>
+
+<!-- Экран настроек уведомлений -->
+<div id="settings-form">
+    <div class="form-card">
+        <h2>Настройки</h2>
+        <div class="label">Время ежедневного отчета:</div>
+        <select id="notifyHour">
+            <!-- Часы будут сгенерированы через JavaScript -->
+        </select>
+        <button class="action-btn btn-primary" onclick="saveSettings()">Сохранить</button>
+        <button class="action-btn btn-secondary" onclick="showDashboard()" style="margin-top: 12px;">Назад</button>
+        
+        <div style="margin-top: 30px; border-top: 1px solid #e2e8f0; padding-top: 20px;">
+            <button class="action-btn btn-secondary" style="color: #e74c3c; border-color: #e74c3c; margin-top: 0;" onclick="clearData()">Сбросить все данные</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const tg = window.Telegram.WebApp;
+    tg.expand();
+
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbyUXAAcJQDfruE14sowau8XRiWHLBdnJZs0sTfJ-sZRIKa823zgwUeJx0L20jOIAUVOTQ/exec'; 
+
+    const dashboard = document.getElementById('dashboard');
+    const addForm = document.getElementById('add-form');
+    const settingsForm = document.getElementById('settings-form');
+    const habitsListEl = document.getElementById('habitsList');
+    const totalCardContainer = document.getElementById('totalCardContainer');
+    const totalSavedAmountEl = document.getElementById('totalSavedAmount');
+    const notifyHourSelect = document.getElementById('notifyHour');
+
+    let editingIndex = null;
+
+    // Генерируем 24 часа для селекта
+    function populateHours() {
+        notifyHourSelect.innerHTML = '';
+        for (let i = 0; i < 24; i++) {
+            const hourStr = i.toString().padStart(2, '0') + ':00';
+            const option = new Option(hourStr, i);
+            notifyHourSelect.add(option);
+        }
+    }
+
+    function syncWithServer(habits) {
+        const user = tg.initDataUnsafe?.user;
+        const notifyHour = localStorage.getItem('notifyHour') || 20; 
+        if (!user || !user.id || !BACKEND_URL.includes('script.google.com')) return; 
+
+        fetch(BACKEND_URL, {
+            method: 'POST',
+            mode: 'no-cors', 
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                chatId: user.id,
+                habits: habits,
+                notifyHour: parseInt(notifyHour) 
+            })
+        }).catch(err => console.log('Ошибка синхронизации'));
+    }
+
+    function loadApp() {
+        populateHours(); // Заполняем выпадающий список часами при загрузке
+
+        const habits = JSON.parse(localStorage.getItem('userHabits')) || [];
+        if (habits.length > 0) {
+            renderHabits(habits);
+            showDashboard();
+        } else {
+            showAddForm();
+            const cancelBtn = document.querySelector('#add-form button:last-child');
+            if(cancelBtn) cancelBtn.style.display = 'none';
+        }
+    }
+
+    function toggleHabit(element) {
+        const card = element.closest('.habit-card');
+        card.classList.toggle('collapsed');
+    }
+
+    function setupLongPress(element, index) {
+        let pressTimer = null;
+        let isLongPress = false;
+        const startPress = () => { isLongPress = false; pressTimer = setTimeout(() => { isLongPress = true; showHabitMenu(index); }, 500); };
+        const cancelPress = () => { clearTimeout(pressTimer); };
+        
+        element.addEventListener('mousedown', startPress);
+        element.addEventListener('touchstart', startPress, {passive: true});
+        element.addEventListener('mouseup', cancelPress);
+        element.addEventListener('mouseleave', cancelPress);
+        element.addEventListener('touchend', cancelPress);
+        element.addEventListener('touchmove', cancelPress);
+        element.querySelector('.habit-title-bar').addEventListener('click', (e) => { if (isLongPress) { e.stopImmediatePropagation(); e.preventDefault(); } });
+    }
+
+    function showHabitMenu(index) {
+        tg.showPopup({
+            title: 'Управление трекером',
+            message: 'Выберите действие:',
+            buttons: [
+                { id: 'edit', type: 'default', text: 'Изменить' },
+                { id: 'delete', type: 'destructive', text: 'Удалить' },
+                { id: 'cancel', type: 'cancel', text: 'Отмена' }
+            ]
+        }, function(buttonId) {
+            if (buttonId === 'delete') deleteHabit(index);
+            else if (buttonId === 'edit') editHabit(index);
+        });
+    }
+
+    function deleteHabit(index) {
+        tg.showConfirm('Точно удалить этот трекер?', function(confirmed) {
+            if (confirmed) {
+                let habits = JSON.parse(localStorage.getItem('userHabits')) || [];
+                habits.splice(index, 1);
+                localStorage.setItem('userHabits', JSON.stringify(habits));
+                syncWithServer(habits); 
+                loadApp();
+            }
+        });
+    }
+
+    function editHabit(index) {
+        const habits = JSON.parse(localStorage.getItem('userHabits')) || [];
+        const habit = habits[index];
+        document.getElementById('habitName').value = habit.name;
+        document.getElementById('startDate').value = habit.date;
+        document.getElementById('dailyAmount').value = habit.amount;
+        document.getElementById('formTitle').textContent = 'Изменить трекер';
+        editingIndex = index;
+        showAddForm();
+        const cancelBtn = document.querySelector('#add-form button:last-child');
+        if(cancelBtn) cancelBtn.style.display = 'block';
+    }
+
+    function renderHabits(habits) {
+        habitsListEl.innerHTML = '';
+        let grandTotal = 0;
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        habits.forEach((habit, index) => {
+            const startDate = new Date(habit.date);
+            startDate.setHours(0,0,0,0);
+            const diffTime = today - startDate;
+            let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+            if (diffDays < 0) diffDays = 0;
+            const totalSaved = diffDays * parseFloat(habit.amount);
+            grandTotal += totalSaved;
+
+            const habitHTML = `
+                <div class="habit-card" id="habit-card-${index}">
+                    <div class="habit-title-bar" onclick="toggleHabit(this)">
+                        <span>${habit.name}</span>
+                        <span class="arrow-icon">▼</span>
+                    </div>
+                    <div class="habit-content">
+                        <div class="habit-stats-row">
+                            <div class="stat-box stat-days">
+                                <div class="stat-label">Дней</div>
+                                <span class="stat-value">${diffDays}</span>
+                            </div>
+                            <div class="stat-box stat-money">
+                                <div class="stat-label">Сэкономлено</div>
+                                <span class="stat-value">${totalSaved.toLocaleString('ru-RU')} ₽</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            habitsListEl.innerHTML += habitHTML;
+        });
+
+        totalSavedAmountEl.textContent = grandTotal.toLocaleString('ru-RU') + ' ₽';
+        totalCardContainer.style.display = 'block';
+
+        habits.forEach((_, index) => {
+            const cardEl = document.getElementById(`habit-card-${index}`);
+            if (cardEl) setupLongPress(cardEl, index);
+        });
+    }
+
+    function saveHabit() {
+        const name = document.getElementById('habitName').value;
+        const date = document.getElementById('startDate').value;
+        const amount = document.getElementById('dailyAmount').value;
+
+        if (!name || !date || !amount) { tg.showAlert('Пожалуйста, заполните все поля!'); return; }
+
+        const habits = JSON.parse(localStorage.getItem('userHabits')) || [];
+        if (editingIndex !== null) {
+            habits[editingIndex] = { name: name, date: date, amount: amount };
+            editingIndex = null;
+        } else {
+            habits.push({ name: name, date: date, amount: amount });
+        }
+
+        localStorage.setItem('userHabits', JSON.stringify(habits));
+        syncWithServer(habits); 
+        
+        document.getElementById('habitName').value = '';
+        document.getElementById('startDate').value = '';
+        document.getElementById('dailyAmount').value = '';
+        document.getElementById('formTitle').textContent = 'Новая привычка';
+
+        // ИСПРАВЛЕНИЕ UX: Перерисовываем список привычек на дашборде перед переключением экрана
+        renderHabits(habits); 
+        showDashboard();
+    }
+
+    function showAddForm() { 
+        dashboard.classList.remove('active'); 
+        settingsForm.classList.remove('active'); 
+        addForm.classList.add('active'); 
+    }
+    
+    function showSettings() {
+        dashboard.classList.remove('active');
+        addForm.classList.remove('active');
+        settingsForm.classList.add('active');
+        
+        const savedHour = localStorage.getItem('notifyHour') || "20";
+        notifyHourSelect.value = savedHour;
+    }
+    
+    function saveSettings() {
+        const hour = notifyHourSelect.value;
+        localStorage.setItem('notifyHour', hour);
+        
+        const habits = JSON.parse(localStorage.getItem('userHabits')) || [];
+        syncWithServer(habits);
+        
+        showDashboard();
+    }
+
+    function showDashboard() {
+        const habits = JSON.parse(localStorage.getItem('userHabits')) || [];
+        if (habits.length === 0) return; 
+        editingIndex = null;
+        addForm.classList.remove('active');
+        settingsForm.classList.remove('active');
+        dashboard.classList.add('active');
+    }
+
+    function clearData() {
+        tg.showConfirm('Точно удалить все данные?', function(result) {
+            if (result) {
+                localStorage.removeItem('userHabits');
+                syncWithServer([]); 
+                loadApp();
+            }
+        });
+    }
+
+    loadApp();
+    tg.ready();
+</script>
+</body>
+</html>
