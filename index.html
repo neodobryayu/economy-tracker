@@ -340,7 +340,16 @@
     let oneTimeSaves = []; 
     let relapses = []; 
     let globalGoal = null; 
-    let selectedDateValue = new Date().toISOString().split('T')[0];
+
+    // Вспомогательная функция для генерации локальной даты (Y-M-D) без смещения UTC
+    function getLocalDateString(d = new Date()) {
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${yyyy}-${mm}-${dd}`;
+    }
+
+    let selectedDateValue = getLocalDateString();
 
     const monthsNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     const monthsFullNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
@@ -383,7 +392,11 @@
     }
 
     function initWheelPicker(dateStr) {
-        const date = dateStr ? new Date(dateStr) : new Date();
+        let date = new Date();
+        if (dateStr) {
+            const parts = dateStr.split('-');
+            date = new Date(parts[0], parts[1] - 1, parts[2]);
+        }
         const d = date.getDate(), m = date.getMonth(), y = date.getFullYear();
         const colDay = document.getElementById('colDay'), colMonth = document.getElementById('colMonth'), colYear = document.getElementById('colYear');
 
@@ -478,7 +491,9 @@
         const habit = currentHabits[index];
         const today = new Date();
         today.setHours(0,0,0,0);
-        const startDate = new Date(habit.date);
+        
+        const parts = habit.date.split('-');
+        const startDate = new Date(parts[0], parts[1] - 1, parts[2]);
         startDate.setHours(0,0,0,0);
         
         let diffDays = Math.max(0, Math.floor((today - startDate) / (1000 * 60 * 60 * 24)));
@@ -492,7 +507,7 @@
                     date: new Date().toISOString() 
                 });
             }
-            currentHabits[index].date = new Date().toISOString().split('T')[0];
+            currentHabits[index].date = getLocalDateString(new Date());
             syncToCloud();
             renderDashboard();
         }
@@ -523,7 +538,8 @@
         today.setHours(0,0,0,0);
 
         currentHabits.forEach((habit, index) => {
-            const startDate = new Date(habit.date);
+            const parts = habit.date.split('-');
+            const startDate = new Date(parts[0], parts[1] - 1, parts[2]);
             startDate.setHours(0,0,0,0);
             
             let diffDaysTotal = Math.max(0, Math.floor((today - startDate) / (1000 * 60 * 60 * 24)));
@@ -696,7 +712,8 @@
             const amt = parseFloat(habit.amount);
             dailyRunRate += amt;
             
-            const startDate = new Date(habit.date);
+            const parts = habit.date.split('-');
+            const startDate = new Date(parts[0], parts[1] - 1, parts[2]);
             startDate.setHours(0,0,0,0);
             
             let diffDays = Math.max(0, Math.floor((today - startDate) / (1000 * 60 * 60 * 24)));
@@ -800,8 +817,8 @@
     function showAddForm() {
         switchScreen('add-form');
         if (editingIndex === null && !document.getElementById('startDateDisplay').value) {
+            selectedDateValue = getLocalDateString(new Date());
             const today = new Date();
-            selectedDateValue = today.toISOString().split('T')[0];
             document.getElementById('startDateDisplay').value = `${today.getDate()} ${monthsFullNames[today.getMonth()]} ${today.getFullYear()}`;
         }
     }
@@ -820,7 +837,8 @@
         const habit = currentHabits[index];
         document.getElementById('habitName').value = habit.name;
         selectedDateValue = habit.date;
-        const dObj = new Date(habit.date);
+        const parts = habit.date.split('-');
+        const dObj = new Date(parts[0], parts[1] - 1, parts[2]);
         document.getElementById('startDateDisplay').value = `${dObj.getDate()} ${monthsFullNames[dObj.getMonth()]} ${dObj.getFullYear()}`;
         document.getElementById('dailyAmount').value = habit.amount;
         document.getElementById('formTitle').textContent = 'Изменить трекер';
