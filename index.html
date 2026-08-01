@@ -40,9 +40,9 @@
             margin-top: 12px; 
         }
 
-        .total-card { background-color: #ffffff; border-radius: 20px; padding: 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); text-align: center; }
+        .total-card { background-color: #ffffff; border-radius: 20px; padding: 24px 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); text-align: center; }
         .total-title { font-size: 14px; font-weight: 500; color: #7f8c8d; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .total-amount { color: #2c3e50; font-size: 32px; font-weight: 700; line-height: 1.2; }
+        .total-amount { color: #2c3e50; font-size: 34px; font-weight: 700; line-height: 1.2; }
         
         #habitsList { display: flex; flex-direction: column; gap: 16px; }
         .habit-card { background-color: #ffffff; border-radius: 20px; padding: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); -webkit-touch-callout: none; user-select: none; }
@@ -61,21 +61,21 @@
         .stat-label { font-size: 12px; font-weight: 500; margin-bottom: 6px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-value { font-size: 26px; font-weight: 700; line-height: 1.2; }
         
-        /* Стили для прогресс-бара */
-        .progress-wrapper { margin-top: 4px; padding: 0 4px; }
+        /* Стили для глобального прогресс-бара */
+        .progress-wrapper { margin-top: 20px; padding: 0 4px; text-align: left; }
         .progress-header { display: flex; justify-content: space-between; font-size: 13px; color: #7f8c8d; margin-bottom: 8px; font-weight: 500; }
-        .progress-track { background-color: #f1f3f5; border-radius: 8px; height: 10px; overflow: hidden; width: 100%; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
+        .progress-track { background-color: #f1f3f5; border-radius: 8px; height: 12px; overflow: hidden; width: 100%; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
         .progress-fill { background-color: #3498db; height: 100%; border-radius: 8px; transition: width 0.5s ease-out; }
         .progress-fill.completed { background-color: #2e7d32; }
 
         .form-card { background-color: #ffffff; border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); }
-        .form-card h2 { margin-top: 0; color: #2c3e50; font-size: 20px;}
+        .form-card h2 { margin-top: 0; color: #2c3e50; font-size: 20px; margin-bottom: 24px; }
         .label { font-size: 14px; color: #7f8c8d; font-weight: 500; text-align: left; margin-bottom: 6px; }
         
-        input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; cursor: pointer; }
+        input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; cursor: pointer; }
         input:focus { border-color: #3498db; }
 
-        /* Модальное окно и барабан */
+        /* Модальное окно и барабан (с идеальным центрированием) */
         .wheel-modal {
             display: none;
             position: fixed;
@@ -159,7 +159,7 @@
             font-size: 19px;
         }
 
-        #dashboard, #add-form { display: none; }
+        #dashboard, #add-form, #goal-form { display: none; }
         .active { display: block !important; }
     </style>
 </head>
@@ -169,11 +169,15 @@
     <div class="total-card" id="totalCardContainer" style="display: none;">
         <div class="total-title">Общая экономия</div>
         <div class="total-amount" id="totalSavedAmount">0 ₽</div>
+        
+        <!-- Глобальный прогресс-бар (появляется только если есть цель) -->
+        <div id="globalProgressContainer" style="display: none;"></div>
     </div>
     
     <div id="habitsList" style="margin-bottom: 16px;"></div>
     
     <button class="action-btn btn-primary" onclick="showAddForm()">Добавить трекер</button>
+    <button class="action-btn" style="background-color: #f1f3f5; color: #2c3e50; margin-top: 12px;" onclick="showGoalForm()" id="goalBtn">Добавить цель</button>
     <button class="action-btn btn-secondary" style="color: #e74c3c !important; border-color: #e74c3c !important;" onclick="resetAllData()">Начать все сначала</button>
 </div>
 
@@ -187,12 +191,19 @@
         <input type="text" id="startDateDisplay" placeholder="Нажмите для выбора даты" readonly onclick="openWheelPicker()">
         <div class="label">Экономия в день (₽):</div>
         <input type="number" id="dailyAmount" placeholder="Например: 200">
-        
-        <!-- Новое поле для цели -->
-        <div class="label">Сумма цели (₽, необязательно):</div>
-        <input type="number" id="goalAmount" placeholder="Например: 15000">
-
         <button class="action-btn btn-primary" onclick="saveHabit()">Сохранить</button>
+        <button class="action-btn btn-secondary" onclick="showDashboard()">Назад</button>
+    </div>
+</div>
+
+<!-- Экран установки глобальной финансовой цели -->
+<div id="goal-form">
+    <div class="form-card">
+        <h2>Финансовая цель</h2>
+        <div class="label">Сколько хотим накопить? (₽):</div>
+        <input type="number" id="globalGoalInput" placeholder="Например: 50000">
+        <button class="action-btn btn-primary" onclick="saveGoal()">Сохранить цель</button>
+        <button class="action-btn" style="background-color: transparent; color: #e74c3c; margin-top: 12px; display: none;" onclick="deleteGoal()" id="deleteGoalBtn">Удалить цель</button>
         <button class="action-btn btn-secondary" onclick="showDashboard()">Назад</button>
     </div>
 </div>
@@ -219,17 +230,23 @@
 
     const dashboard = document.getElementById('dashboard');
     const addForm = document.getElementById('add-form');
+    const goalForm = document.getElementById('goal-form');
+    
     const habitsListEl = document.getElementById('habitsList');
     const totalCardContainer = document.getElementById('totalCardContainer');
     const totalSavedAmountEl = document.getElementById('totalSavedAmount');
+    const globalProgressContainer = document.getElementById('globalProgressContainer');
+    const goalBtn = document.getElementById('goalBtn');
 
     let editingIndex = null;
     let currentHabits = [];
+    let globalGoal = null; // Глобальная финансовая цель
     let selectedDateValue = new Date().toISOString().split('T')[0];
 
     const monthsNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     const monthsFullNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 
+    // Инициализация барабана даты
     function initWheelPicker(dateStr) {
         const date = dateStr ? new Date(dateStr) : new Date();
         const d = date.getDate();
@@ -340,6 +357,7 @@
         document.getElementById('wheelModal').classList.remove('active');
     }
 
+    // Загрузка и синхронизация данных
     function getUserId() {
         return tg.initDataUnsafe?.user?.id || 'test_user_pc';
     }
@@ -348,7 +366,14 @@
         const userId = getUserId();
         
         if (FIREBASE_URL.includes('ВАША_ССЫЛКА')) {
-            currentHabits = JSON.parse(localStorage.getItem('userHabits')) || [];
+            const localData = JSON.parse(localStorage.getItem('userData'));
+            if (localData && typeof localData === 'object' && !Array.isArray(localData)) {
+                currentHabits = localData.habits || [];
+                globalGoal = localData.globalGoal || null;
+            } else {
+                // Миграция старых данных
+                currentHabits = JSON.parse(localStorage.getItem('userHabits')) || [];
+            }
             handleHabitsLoaded();
             return;
         }
@@ -356,13 +381,31 @@
         fetch(`${FIREBASE_URL}/${userId}.json`)
             .then(res => res.json())
             .then(data => {
-                currentHabits = data || [];
-                localStorage.setItem('userHabits', JSON.stringify(currentHabits));
+                if (Array.isArray(data)) {
+                    // Миграция старых массивов из Firebase
+                    currentHabits = data;
+                    globalGoal = null;
+                } else if (data && typeof data === 'object') {
+                    currentHabits = data.habits || [];
+                    globalGoal = data.globalGoal || null;
+                } else {
+                    currentHabits = [];
+                    globalGoal = null;
+                }
+                
+                // Сразу сохраняем в новом формате
+                localStorage.setItem('userData', JSON.stringify({ habits: currentHabits, globalGoal: globalGoal }));
                 handleHabitsLoaded();
             })
             .catch(err => {
                 console.log('Ошибка загрузки из облака, берем локальные', err);
-                currentHabits = JSON.parse(localStorage.getItem('userHabits')) || [];
+                const localData = JSON.parse(localStorage.getItem('userData'));
+                if (localData && typeof localData === 'object' && !Array.isArray(localData)) {
+                    currentHabits = localData.habits || [];
+                    globalGoal = localData.globalGoal || null;
+                } else {
+                    currentHabits = JSON.parse(localStorage.getItem('userHabits')) || [];
+                }
                 handleHabitsLoaded();
             });
     }
@@ -378,9 +421,9 @@
         }
     }
 
-    function syncToCloud(habits) {
-        currentHabits = habits;
-        localStorage.setItem('userHabits', JSON.stringify(habits));
+    function syncToCloud() {
+        const payload = { habits: currentHabits, globalGoal: globalGoal };
+        localStorage.setItem('userData', JSON.stringify(payload));
 
         if (FIREBASE_URL.includes('ВАША_ССЫЛКА')) return;
 
@@ -388,15 +431,16 @@
         fetch(`${FIREBASE_URL}/${userId}.json`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(habits)
+            body: JSON.stringify(payload)
         }).catch(err => console.log('Ошибка синхронизации с облаком'));
     }
 
     function resetAllData() {
         tg.showConfirm('Точно удалить все трекеры и начать сначала?', function(confirmed) {
             if (confirmed) {
-                syncToCloud([]);
                 currentHabits = [];
+                globalGoal = null;
+                syncToCloud();
                 showAddForm();
                 const cancelBtn = document.querySelector('#add-form button:last-child');
                 if(cancelBtn) cancelBtn.style.display = 'none';
@@ -404,6 +448,39 @@
         });
     }
 
+    // Управление глобальной целью
+    function showGoalForm() {
+        dashboard.classList.remove('active');
+        addForm.classList.remove('active');
+        goalForm.classList.add('active');
+        
+        document.getElementById('globalGoalInput').value = globalGoal || '';
+        
+        if (globalGoal) {
+            document.getElementById('deleteGoalBtn').style.display = 'block';
+        } else {
+            document.getElementById('deleteGoalBtn').style.display = 'none';
+        }
+    }
+
+    function saveGoal() {
+        const val = document.getElementById('globalGoalInput').value;
+        if (val && parseFloat(val) > 0) {
+            globalGoal = parseFloat(val);
+        } else {
+            globalGoal = null;
+        }
+        syncToCloud();
+        showDashboard();
+    }
+
+    function deleteGoal() {
+        globalGoal = null;
+        syncToCloud();
+        showDashboard();
+    }
+
+    // Управление привычками
     function toggleHabit(element) {
         const card = element.closest('.habit-card');
         card.classList.toggle('collapsed');
@@ -443,7 +520,7 @@
         tg.showConfirm('Точно удалить этот трекер?', function(confirmed) {
             if (confirmed) {
                 currentHabits.splice(index, 1);
-                syncToCloud(currentHabits);
+                syncToCloud();
                 
                 if (currentHabits.length > 0) {
                     renderHabits(currentHabits);
@@ -467,9 +544,6 @@
 
         document.getElementById('dailyAmount').value = habit.amount;
         
-        // Заполняем поле цели, если оно было
-        document.getElementById('goalAmount').value = habit.goalAmount || '';
-        
         document.getElementById('formTitle').textContent = 'Изменить трекер';
         editingIndex = index;
         showAddForm();
@@ -492,27 +566,6 @@
             const totalSaved = diffDays * parseFloat(habit.amount);
             grandTotal += totalSaved;
 
-            // Логика прогресс-бара
-            let progressHTML = '';
-            if (habit.goalAmount && !isNaN(parseFloat(habit.goalAmount)) && parseFloat(habit.goalAmount) > 0) {
-                const goal = parseFloat(habit.goalAmount);
-                let percent = (totalSaved / goal) * 100;
-                const isCompleted = percent >= 100;
-                const displayPercent = percent > 100 ? 100 : percent;
-
-                progressHTML = `
-                    <div class="progress-wrapper">
-                        <div class="progress-header">
-                            <span>Цель: ${goal.toLocaleString('ru-RU')} ₽</span>
-                            <span>${Math.floor(percent)}%</span>
-                        </div>
-                        <div class="progress-track">
-                            <div class="progress-fill ${isCompleted ? 'completed' : ''}" style="width: ${displayPercent}%"></div>
-                        </div>
-                    </div>
-                `;
-            }
-
             const habitHTML = `
                 <div class="habit-card" id="habit-card-${index}">
                     <div class="habit-title-bar" onclick="toggleHabit(this)">
@@ -530,15 +583,40 @@
                                 <span class="stat-value">${totalSaved.toLocaleString('ru-RU')} ₽</span>
                             </div>
                         </div>
-                        ${progressHTML}
                     </div>
                 </div>
             `;
             habitsListEl.innerHTML += habitHTML;
         });
 
+        // Обновляем общую сумму
         totalSavedAmountEl.textContent = grandTotal.toLocaleString('ru-RU') + ' ₽';
         totalCardContainer.style.display = 'block';
+
+        // Логика глобального прогресс-бара
+        if (globalGoal && parseFloat(globalGoal) > 0) {
+            const goal = parseFloat(globalGoal);
+            let percent = (grandTotal / goal) * 100;
+            const isCompleted = percent >= 100;
+            const displayPercent = percent > 100 ? 100 : percent;
+
+            globalProgressContainer.style.display = 'block';
+            globalProgressContainer.innerHTML = `
+                <div class="progress-wrapper">
+                    <div class="progress-header">
+                        <span>Цель: ${goal.toLocaleString('ru-RU')} ₽</span>
+                        <span>${Math.floor(percent)}%</span>
+                    </div>
+                    <div class="progress-track">
+                        <div class="progress-fill ${isCompleted ? 'completed' : ''}" style="width: ${displayPercent}%"></div>
+                    </div>
+                </div>
+            `;
+            goalBtn.textContent = 'Изменить цель';
+        } else {
+            globalProgressContainer.style.display = 'none';
+            goalBtn.textContent = 'Добавить цель';
+        }
 
         habits.forEach((_, index) => {
             const cardEl = document.getElementById(`habit-card-${index}`);
@@ -550,31 +628,31 @@
         const name = document.getElementById('habitName').value;
         const date = selectedDateValue;
         const amount = document.getElementById('dailyAmount').value;
-        const goalAmount = document.getElementById('goalAmount').value;
 
-        if (!name || !date || !amount) { tg.showAlert('Пожалуйста, заполните все обязательные поля!'); return; }
+        if (!name || !date || !amount) { tg.showAlert('Пожалуйста, заполните все поля!'); return; }
 
         let habits = [...currentHabits];
         if (editingIndex !== null) {
-            habits[editingIndex] = { name: name, date: date, amount: amount, goalAmount: goalAmount };
+            habits[editingIndex] = { name: name, date: date, amount: amount };
             editingIndex = null;
         } else {
-            habits.push({ name: name, date: date, amount: amount, goalAmount: goalAmount });
+            habits.push({ name: name, date: date, amount: amount });
         }
-
-        syncToCloud(habits);
+        
+        currentHabits = habits;
+        syncToCloud();
         
         document.getElementById('habitName').value = '';
         document.getElementById('dailyAmount').value = '';
-        document.getElementById('goalAmount').value = '';
         document.getElementById('formTitle').textContent = 'Новая причина экономии';
 
-        renderHabits(habits);
+        renderHabits(currentHabits);
         showDashboard();
     }
 
     function showAddForm() { 
         dashboard.classList.remove('active'); 
+        goalForm.classList.remove('active');
         addForm.classList.add('active');
         if (editingIndex === null && !document.getElementById('startDateDisplay').value) {
             const today = new Date();
@@ -587,7 +665,9 @@
         if (!currentHabits || currentHabits.length === 0) return; 
         editingIndex = null;
         addForm.classList.remove('active');
+        goalForm.classList.remove('active');
         dashboard.classList.add('active');
+        renderHabits(currentHabits);
     }
 
     loadApp();
