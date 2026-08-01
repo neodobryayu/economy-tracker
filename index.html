@@ -68,26 +68,23 @@
         input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; cursor: pointer; }
         input:focus { border-color: #3498db; }
 
-        /* Модальное окно строго по центру экрана (X и Y) через transform */
+        /* --- ИДЕАЛЬНОЕ ЦЕНТРИРОВАНИЕ ОКНА --- */
         .wheel-modal {
             display: none;
             position: fixed;
-            inset: 0;
-            width: 100vw;
-            height: 100vh;
+            top: 0; left: 0; right: 0; bottom: 0;
             background: rgba(0, 0, 0, 0.5);
             z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
         }
-        .wheel-modal.active { display: block; }
+        .wheel-modal.active { display: flex; }
         .wheel-card-box {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
             background: #ffffff;
             border-radius: 24px;
             padding: 24px;
-            width: 90%;
+            width: 100%;
             max-width: 320px;
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
             text-align: center;
@@ -99,10 +96,12 @@
             color: #2c3e50;
             margin-bottom: 16px;
         }
+        
+        /* --- ИДЕАЛЬНЫЙ БАРАБАН --- */
         .wheels-container {
             display: flex;
             justify-content: space-between;
-            height: 132px; /* Ровно 3 строки по 44px */
+            height: 132px; /* Строго 44px * 3 строки */
             position: relative;
             margin-bottom: 20px;
             overflow: hidden;
@@ -111,7 +110,7 @@
         }
         .wheel-indicator {
             position: absolute;
-            top: 44px;
+            top: 44px; /* Строго вторая строка */
             left: 12px;
             right: 12px;
             height: 44px;
@@ -119,6 +118,7 @@
             border-bottom: 2px solid #3498db;
             pointer-events: none;
             z-index: 2;
+            box-sizing: border-box;
         }
         .wheel-column {
             flex: 1;
@@ -127,13 +127,21 @@
             scroll-snap-type: y mandatory;
             -ms-overflow-style: none;
             scrollbar-width: none;
-            padding: 44px 0; /* Ровно по одному элементу отступа сверху и снизу */
+            /* УБРАЛИ PADDING, теперь используются spacers */
             box-sizing: border-box;
             text-align: center;
+            position: relative;
         }
         .wheel-column::-webkit-scrollbar { display: none; }
+        
+        .wheel-spacer {
+            height: 44px;
+            min-height: 44px;
+            width: 100%;
+        }
         .wheel-item {
             height: 44px;
+            line-height: 44px; /* Прибивает текст строго по центру */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -145,6 +153,8 @@
             transition: all 0.15s ease;
             width: 100%;
             box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         .wheel-item.active {
             color: #2c3e50;
@@ -228,22 +238,28 @@
         const colMonth = document.getElementById('colMonth');
         const colYear = document.getElementById('colYear');
 
-        colDay.innerHTML = '';
-        colMonth.innerHTML = '';
-        colYear.innerHTML = '';
-
+        // Использование реальных DOM-элементов вместо CSS padding для идеальной геометрии
+        let dayHtml = '<div class="wheel-spacer"></div>';
         for (let i = 1; i <= 31; i++) {
-            colDay.innerHTML += `<div class="wheel-item" data-value="${i}">${i < 10 ? '0' + i : i}</div>`;
+            dayHtml += `<div class="wheel-item" data-value="${i}">${i < 10 ? '0' + i : i}</div>`;
         }
+        dayHtml += '<div class="wheel-spacer"></div>';
+        colDay.innerHTML = dayHtml;
 
+        let monthHtml = '<div class="wheel-spacer"></div>';
         monthsNames.forEach((mon, index) => {
-            colMonth.innerHTML += `<div class="wheel-item" data-value="${index}">${mon}</div>`;
+            monthHtml += `<div class="wheel-item" data-value="${index}">${mon}</div>`;
         });
+        monthHtml += '<div class="wheel-spacer"></div>';
+        colMonth.innerHTML = monthHtml;
 
+        let yearHtml = '<div class="wheel-spacer"></div>';
         const currentYear = new Date().getFullYear();
         for (let yr = 2020; yr <= currentYear; yr++) {
-            colYear.innerHTML += `<div class="wheel-item" data-value="${yr}">${yr}</div>`;
+            yearHtml += `<div class="wheel-item" data-value="${yr}">${yr}</div>`;
         }
+        yearHtml += '<div class="wheel-spacer"></div>';
+        colYear.innerHTML = yearHtml;
 
         setTimeout(() => {
             scrollToValue('colDay', d);
@@ -260,7 +276,8 @@
         const items = col.querySelectorAll('.wheel-item');
         for (let item of items) {
             if (parseInt(item.getAttribute('data-value')) === val) {
-                item.scrollIntoView({ block: 'center', behavior: 'auto' });
+                // Идеальный скролл ровно до элемента минус высота спейсера (44px)
+                col.scrollTop = item.offsetTop - 44;
                 break;
             }
         }
@@ -279,10 +296,9 @@
         let minDiff = Infinity;
 
         items.forEach(item => {
-            // Вычисляем расстояние от центра контейнера до центра элемента
-            const itemCenter = item.offsetTop + item.offsetHeight / 2;
-            const containerCenter = col.scrollTop + col.clientHeight / 2;
-            const diff = Math.abs(itemCenter - containerCenter);
+            // Вычисляем дистанцию текущего элемента до центральной зоны (которая начинается ровно с 44px)
+            const currentY = item.offsetTop - scrollTop;
+            const diff = Math.abs(currentY - 44);
             if (diff < minDiff) {
                 minDiff = diff;
                 closestItem = item;
