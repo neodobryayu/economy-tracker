@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Трекер отказа</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Подключаем стили красивого календаря -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 16px; color: #2c3e50; }
@@ -40,7 +39,6 @@
         input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; }
         input:focus { border-color: #3498db; }
         
-        /* Стили для кастомного календаря Flatpickr в тон приложения */
         .flatpickr-calendar { border-radius: 20px !important; box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important; border: none !important; font-family: inherit !important; padding: 10px !important; }
         .flatpickr-day.selected { background: #2c3e50 !important; border-color: #2c3e50 !important; border-radius: 12px !important; }
         .flatpickr-day.today { border-color: #3498db !important; }
@@ -71,7 +69,6 @@
         <div class="label">Название:</div>
         <input type="text" id="habitName" placeholder="Например: Кофе с собой">
         <div class="label">Дата старта:</div>
-        <!-- Заменили type="date" на обычный text, чтобы активировать красивый календарь -->
         <input type="text" id="startDate" placeholder="Выберите дату старта">
         <div class="label">Экономия в день (₽):</div>
         <input type="number" id="dailyAmount" placeholder="Например: 200">
@@ -80,7 +77,6 @@
     </div>
 </div>
 
-<!-- Подключаем скрипты календаря и русскую локализацию -->
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
 
@@ -99,22 +95,19 @@
     let editingIndex = null;
     let currentHabits = [];
 
-    // Инициализация красивого календаря
     flatpickr("#startDate", {
         locale: "ru",
         dateFormat: "Y-m-d",
         altInput: true,
         altFormat: "j F Y",
-        maxDate: "today", // Нельзя выбрать дату из будущего
-        disableMobile: "true" // Принудительно открывает наш красивый календарь даже на мобильных
+        maxDate: "today",
+        disableMobile: "true"
     });
 
-    // Получаем уникальный ID пользователя Telegram
     function getUserId() {
         return tg.initDataUnsafe?.user?.id || 'test_user_pc';
     }
 
-    // Загрузка данных из Firebase при старте
     function loadApp() {
         const userId = getUserId();
         
@@ -149,7 +142,6 @@
         }
     }
 
-    // Синхронизация данных с Firebase в реальном времени
     function syncToCloud(habits) {
         currentHabits = habits;
         localStorage.setItem('userHabits', JSON.stringify(habits));
@@ -164,7 +156,6 @@
         }).catch(err => console.log('Ошибка синхронизации с облаком'));
     }
 
-    // Полный сброс всех данных с мгновенным переходом к форме
     function resetAllData() {
         tg.showConfirm('Точно удалить все трекеры и начать сначала?', function(confirmed) {
             if (confirmed) {
@@ -215,10 +206,17 @@
     function deleteHabit(index) {
         tg.showConfirm('Точно удалить этот трекер?', function(confirmed) {
             if (confirmed) {
-                let habits = [...currentHabits];
-                habits.splice(index, 1);
-                syncToCloud(habits);
-                loadApp();
+                currentHabits.splice(index, 1);
+                syncToCloud(currentHabits);
+                
+                if (currentHabits.length > 0) {
+                    renderHabits(currentHabits);
+                    showDashboard();
+                } else {
+                    showAddForm();
+                    const cancelBtn = document.querySelector('#add-form button:last-child');
+                    if(cancelBtn) cancelBtn.style.display = 'none';
+                }
             }
         });
     }
