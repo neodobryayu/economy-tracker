@@ -68,32 +68,30 @@
         input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; cursor: pointer; }
         input:focus { border-color: #3498db; }
 
-        /* Абсолютное центрирование модального окна по X и Y */
+        /* Модальное окно строго по центру экрана (X и Y) через transform */
         .wheel-modal {
             display: none;
             position: fixed;
             inset: 0;
             width: 100vw;
             height: 100vh;
-            height: 100dvh;
-            background: rgba(0, 0, 0, 0.45);
+            background: rgba(0, 0, 0, 0.5);
             z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
-            box-sizing: border-box;
         }
-        .wheel-modal.active { display: flex; }
+        .wheel-modal.active { display: block; }
         .wheel-card-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: #ffffff;
             border-radius: 24px;
             padding: 24px;
-            width: 100%;
+            width: 90%;
             max-width: 320px;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
             text-align: center;
             box-sizing: border-box;
-            margin: auto;
         }
         .wheel-card-title {
             font-size: 18px;
@@ -129,7 +127,7 @@
             scroll-snap-type: y mandatory;
             -ms-overflow-style: none;
             scrollbar-width: none;
-            padding: 44px 0; /* Ровно 1 элемент сверху и снизу для идеального центрирования */
+            padding: 44px 0; /* Ровно по одному элементу отступа сверху и снизу */
             box-sizing: border-box;
             text-align: center;
         }
@@ -262,7 +260,7 @@
         const items = col.querySelectorAll('.wheel-item');
         for (let item of items) {
             if (parseInt(item.getAttribute('data-value')) === val) {
-                col.scrollTop = (item.offsetTop - col.offsetTop) - 44;
+                item.scrollIntoView({ block: 'center', behavior: 'auto' });
                 break;
             }
         }
@@ -281,7 +279,10 @@
         let minDiff = Infinity;
 
         items.forEach(item => {
-            const diff = Math.abs((item.offsetTop - col.offsetTop) - 44 - scrollTop);
+            // Вычисляем расстояние от центра контейнера до центра элемента
+            const itemCenter = item.offsetTop + item.offsetHeight / 2;
+            const containerCenter = col.scrollTop + col.clientHeight / 2;
+            const diff = Math.abs(itemCenter - containerCenter);
             if (diff < minDiff) {
                 minDiff = diff;
                 closestItem = item;
