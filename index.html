@@ -6,13 +6,29 @@
     <title>Трекер отказа</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 16px; color: #2c3e50; }
+        /* Подключаем системные цвета Telegram с красивыми светлыми фоллбеками на случай открытия вне мессенджера */
+        :root {
+            --bg-main: var(--tg-theme-secondary-bg-color, #f4f6f8);
+            --bg-card: var(--tg-theme-bg-color, #ffffff);
+            --text-main: var(--tg-theme-text-color, #2c3e50);
+            --text-hint: var(--tg-theme-hint-color, #7f8c8d);
+            --btn-main: var(--tg-theme-button-color, #2c3e50);
+            --btn-text: var(--tg-theme-button-text-color, #ffffff);
+            --danger: #e74c3c;
+            --success-text: #4caf50;
+            --success-bg: rgba(76, 175, 80, 0.15);
+            --warning-text: #ff9800;
+            --warning-bg: rgba(255, 152, 0, 0.15);
+            --border-color: rgba(127, 140, 141, 0.2);
+        }
+
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-main); margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 16px; color: var(--text-main); }
         
         .action-btn { 
             -webkit-appearance: none;
             appearance: none;
-            background-color: #ffffff; 
-            color: #2c3e50; 
+            background-color: var(--bg-card); 
+            color: var(--text-main); 
             border-radius: 20px; 
             text-align: center; 
             padding: 16px; 
@@ -30,57 +46,58 @@
         .action-btn:active { transform: scale(0.98); }
         
         .btn-primary { 
-            background-color: #2c3e50 !important; 
-            color: #ffffff !important; 
+            background-color: var(--btn-main) !important; 
+            color: var(--btn-text) !important; 
         }
         .btn-secondary { 
             background-color: transparent !important; 
-            color: #7f8c8d !important; 
-            border: 1px solid #e2e8f0 !important; 
+            color: var(--text-hint) !important; 
+            border: 1px solid var(--border-color) !important; 
             margin-top: 12px; 
         }
 
-        .total-card { background-color: #ffffff; border-radius: 20px; padding: 24px 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); text-align: center; }
-        .total-title { font-size: 14px; font-weight: 500; color: #7f8c8d; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
-        .total-amount { color: #2c3e50; font-size: 34px; font-weight: 700; line-height: 1.2; }
+        .total-card { background-color: var(--bg-card); border-radius: 20px; padding: 24px 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); text-align: center; }
+        .total-title { font-size: 14px; font-weight: 500; color: var(--text-hint); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .total-amount { color: var(--text-main); font-size: 34px; font-weight: 700; line-height: 1.2; }
         
         #habitsList { display: flex; flex-direction: column; gap: 16px; }
-        .habit-card { background-color: #ffffff; border-radius: 20px; padding: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); -webkit-touch-callout: none; user-select: none; }
-        .habit-title-bar { background-color: #f8f9fa; color: #2c3e50; border-radius: 14px; text-align: center; padding: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background-color 0.2s; }
-        .habit-title-bar:active { background-color: #f1f3f5; }
+        .habit-card { background-color: var(--bg-card); border-radius: 20px; padding: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); -webkit-touch-callout: none; user-select: none; }
+        .habit-title-bar { background-color: var(--bg-main); color: var(--text-main); border-radius: 14px; text-align: center; padding: 12px; font-size: 16px; font-weight: 600; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px; transition: background-color 0.2s; }
+        .habit-title-bar:active { filter: brightness(0.95); }
         
-        .arrow-icon { font-size: 12px; color: #95a5a6; transition: transform 0.3s ease; }
+        .arrow-icon { font-size: 12px; color: var(--text-hint); transition: transform 0.3s ease; }
         .habit-content { max-height: 300px; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease; opacity: 1; display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
         .habit-card.collapsed .habit-content { max-height: 0; opacity: 0; margin-top: 0; }
         .habit-card.collapsed .arrow-icon { transform: rotate(-90deg); }
         
         .habit-stats-row { display: flex; gap: 12px; }
         .stat-box { flex: 1; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px 10px; text-align: center; position: relative; overflow: hidden; }
-        .stat-days { background-color: #e8f5e9; color: #2e7d32; }
-        .stat-money { background-color: #fff8e1; color: #f57f17; }
+        .stat-days { background-color: var(--success-bg); color: var(--success-text); }
+        .stat-money { background-color: var(--warning-bg); color: var(--warning-text); }
         .stat-label { font-size: 12px; font-weight: 500; margin-bottom: 6px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-value { font-size: 26px; font-weight: 700; line-height: 1.2; }
         
         /* Стили для глобального прогресс-бара */
         .progress-wrapper { margin-top: 20px; padding: 0 4px; text-align: left; }
-        .progress-header { display: flex; justify-content: space-between; font-size: 13px; color: #7f8c8d; margin-bottom: 8px; font-weight: 500; }
-        .progress-track { background-color: #f1f3f5; border-radius: 8px; height: 12px; overflow: hidden; width: 100%; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
-        .progress-fill { background-color: #3498db; height: 100%; border-radius: 8px; transition: width 0.5s ease-out; }
-        .progress-fill.completed { background-color: #2e7d32; }
+        .progress-header { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-hint); margin-bottom: 8px; font-weight: 500; }
+        .progress-track { background-color: var(--bg-main); border-radius: 8px; height: 12px; overflow: hidden; width: 100%; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
+        .progress-fill { background-color: var(--btn-main); height: 100%; border-radius: 8px; transition: width 0.5s ease-out; }
+        .progress-fill.completed { background-color: var(--success-text); }
 
-        .form-card { background-color: #ffffff; border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); }
-        .form-card h2 { margin-top: 0; color: #2c3e50; font-size: 20px; margin-bottom: 24px; }
-        .label { font-size: 14px; color: #7f8c8d; font-weight: 500; text-align: left; margin-bottom: 6px; }
+        .form-card { background-color: var(--bg-card); border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); }
+        .form-card h2 { margin-top: 0; color: var(--text-main); font-size: 20px; margin-bottom: 24px; }
+        .label { font-size: 14px; color: var(--text-hint); font-weight: 500; text-align: left; margin-bottom: 6px; }
         
-        input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 20px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; cursor: pointer; }
-        input:focus { border-color: #3498db; }
+        input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 12px; background-color: var(--bg-main); font-size: 16px; color: var(--text-main); outline: none; transition: border-color 0.2s; cursor: pointer; }
+        input:focus { border-color: var(--btn-main); }
+        input::placeholder { color: var(--text-hint); opacity: 0.7; }
 
-        /* Модальное окно и барабан (с идеальным центрированием) */
+        /* Модальное окно и барабан */
         .wheel-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.5);
+            background: rgba(0, 0, 0, 0.6);
             z-index: 1000;
         }
         .wheel-modal.active { display: block; }
@@ -89,16 +106,16 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            background: #ffffff;
+            background: var(--bg-card);
             border-radius: 24px;
             padding: 24px;
             width: 90%;
             max-width: 320px;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
             text-align: center;
             box-sizing: border-box;
         }
-        .wheel-card-title { font-size: 18px; font-weight: 700; color: #2c3e50; margin-bottom: 16px; }
+        .wheel-card-title { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 16px; }
         
         .wheels-container {
             display: flex;
@@ -107,7 +124,7 @@
             position: relative;
             margin-bottom: 20px;
             overflow: hidden;
-            background: #f8f9fa;
+            background: var(--bg-main);
             border-radius: 16px;
         }
         .wheel-indicator {
@@ -116,8 +133,8 @@
             left: 12px;
             right: 12px;
             height: 44px;
-            border-top: 2px solid #3498db;
-            border-bottom: 2px solid #3498db;
+            border-top: 2px solid var(--btn-main);
+            border-bottom: 2px solid var(--btn-main);
             pointer-events: none;
             z-index: 2;
             box-sizing: border-box;
@@ -144,7 +161,7 @@
             justify-content: center;
             font-size: 17px;
             font-weight: 500;
-            color: #95a5a6;
+            color: var(--text-hint);
             scroll-snap-align: center;
             cursor: pointer;
             transition: all 0.15s ease;
@@ -154,7 +171,7 @@
             padding: 0;
         }
         .wheel-item.active {
-            color: #2c3e50;
+            color: var(--text-main);
             font-weight: 700;
             font-size: 19px;
         }
@@ -170,15 +187,14 @@
         <div class="total-title">Общая экономия</div>
         <div class="total-amount" id="totalSavedAmount">0 ₽</div>
         
-        <!-- Глобальный прогресс-бар (появляется только если есть цель) -->
         <div id="globalProgressContainer" style="display: none;"></div>
     </div>
     
     <div id="habitsList" style="margin-bottom: 16px;"></div>
     
     <button class="action-btn btn-primary" onclick="showAddForm()">Добавить трекер</button>
-    <button class="action-btn" style="background-color: #f1f3f5; color: #2c3e50; margin-top: 12px;" onclick="showGoalForm()" id="goalBtn">Добавить цель</button>
-    <button class="action-btn btn-secondary" style="color: #e74c3c !important; border-color: #e74c3c !important;" onclick="resetAllData()">Начать все сначала</button>
+    <button class="action-btn" style="background-color: var(--bg-main); color: var(--text-main); margin-top: 12px;" onclick="showGoalForm()" id="goalBtn">Добавить цель</button>
+    <button class="action-btn btn-secondary" style="color: var(--danger) !important; border-color: var(--danger) !important;" onclick="resetAllData()">Начать все сначала</button>
 </div>
 
 <!-- Экран добавления/редактирования привычки -->
@@ -203,7 +219,7 @@
         <div class="label">Сколько хотим накопить? (₽):</div>
         <input type="number" id="globalGoalInput" placeholder="Например: 50000">
         <button class="action-btn btn-primary" onclick="saveGoal()">Сохранить цель</button>
-        <button class="action-btn" style="background-color: transparent; color: #e74c3c; margin-top: 12px; display: none;" onclick="deleteGoal()" id="deleteGoalBtn">Удалить цель</button>
+        <button class="action-btn" style="background-color: transparent; color: var(--danger); margin-top: 12px; display: none;" onclick="deleteGoal()" id="deleteGoalBtn">Удалить цель</button>
         <button class="action-btn btn-secondary" onclick="showDashboard()">Назад</button>
     </div>
 </div>
@@ -225,6 +241,13 @@
 <script>
     const tg = window.Telegram.WebApp;
     tg.expand();
+    tg.ready();
+    
+    // Подкрашиваем системную шапку самого Telegram под цвет приложения
+    try {
+        if(tg.setHeaderColor) tg.setHeaderColor('bg_color');
+        if(tg.setBackgroundColor) tg.setBackgroundColor('secondary_bg_color');
+    } catch(e) {}
 
     const FIREBASE_URL = 'https://economy-tracker-f8842-default-rtdb.firebaseio.com/'; 
 
@@ -240,13 +263,12 @@
 
     let editingIndex = null;
     let currentHabits = [];
-    let globalGoal = null; // Глобальная финансовая цель
+    let globalGoal = null; 
     let selectedDateValue = new Date().toISOString().split('T')[0];
 
     const monthsNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     const monthsFullNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 
-    // Инициализация барабана даты
     function initWheelPicker(dateStr) {
         const date = dateStr ? new Date(dateStr) : new Date();
         const d = date.getDate();
@@ -357,7 +379,6 @@
         document.getElementById('wheelModal').classList.remove('active');
     }
 
-    // Загрузка и синхронизация данных
     function getUserId() {
         return tg.initDataUnsafe?.user?.id || 'test_user_pc';
     }
@@ -371,7 +392,6 @@
                 currentHabits = localData.habits || [];
                 globalGoal = localData.globalGoal || null;
             } else {
-                // Миграция старых данных
                 currentHabits = JSON.parse(localStorage.getItem('userHabits')) || [];
             }
             handleHabitsLoaded();
@@ -382,7 +402,6 @@
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) {
-                    // Миграция старых массивов из Firebase
                     currentHabits = data;
                     globalGoal = null;
                 } else if (data && typeof data === 'object') {
@@ -393,7 +412,6 @@
                     globalGoal = null;
                 }
                 
-                // Сразу сохраняем в новом формате
                 localStorage.setItem('userData', JSON.stringify({ habits: currentHabits, globalGoal: globalGoal }));
                 handleHabitsLoaded();
             })
@@ -448,7 +466,6 @@
         });
     }
 
-    // Управление глобальной целью
     function showGoalForm() {
         dashboard.classList.remove('active');
         addForm.classList.remove('active');
@@ -480,7 +497,6 @@
         showDashboard();
     }
 
-    // Управление привычками
     function toggleHabit(element) {
         const card = element.closest('.habit-card');
         card.classList.toggle('collapsed');
@@ -589,11 +605,9 @@
             habitsListEl.innerHTML += habitHTML;
         });
 
-        // Обновляем общую сумму
         totalSavedAmountEl.textContent = grandTotal.toLocaleString('ru-RU') + ' ₽';
         totalCardContainer.style.display = 'block';
 
-        // Логика глобального прогресс-бара
         if (globalGoal && parseFloat(globalGoal) > 0) {
             const goal = parseFloat(globalGoal);
             let percent = (grandTotal / goal) * 100;
@@ -671,7 +685,6 @@
     }
 
     loadApp();
-    tg.ready();
 </script>
 </body>
 </html>
