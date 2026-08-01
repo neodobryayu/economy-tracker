@@ -249,7 +249,7 @@
         <h2>Аналитика</h2>
         
         <!-- Прогноз на год -->
-        <div class="stats-subtitle" style="margin-top: 0;">По итогам года вы накопите</div>
+        <div class="stats-subtitle" style="margin-top: 0;">Прогноз за 1 год</div>
         <div class="stats-big-number" id="statsProjection">0 ₽</div>
         
         <!-- График по месяцам -->
@@ -473,9 +473,20 @@
 
         if (oneTimeSaves.length > 0) {
             impulsesContainer.style.display = 'block';
-            [...oneTimeSaves].reverse().forEach((impulse, reversedIndex) => {
-                const originalIndex = oneTimeSaves.length - 1 - reversedIndex;
+            
+            // 1. Считаем общую сумму всех отказов
+            oneTimeSaves.forEach(impulse => {
                 grandTotal += parseFloat(impulse.amount);
+            });
+
+            // 2. Берем только последние 5 для отображения
+            const MAX_ITEMS = 5;
+            const reversedSaves = [...oneTimeSaves].reverse();
+            const displaySaves = reversedSaves.slice(0, MAX_ITEMS);
+            const hiddenCount = reversedSaves.length - MAX_ITEMS;
+
+            displaySaves.forEach((impulse, idx) => {
+                const originalIndex = oneTimeSaves.length - 1 - idx;
                 const dObj = new Date(impulse.date);
                 const dateStr = `${String(dObj.getDate()).padStart(2, '0')}.${String(dObj.getMonth()+1).padStart(2, '0')}.${dObj.getFullYear()}`;
                 
@@ -485,6 +496,15 @@
                         <div class="impulse-right"><span class="impulse-amount">+${parseFloat(impulse.amount).toLocaleString('ru-RU')} ₽</span><span class="impulse-delete" onclick="deleteImpulse(${originalIndex})">✕</span></div>
                     </div>`;
             });
+
+            // 3. Выводим приписку, если есть скрытые
+            if (hiddenCount > 0) {
+                impulsesListEl.innerHTML += `
+                    <div style="text-align: center; font-size: 13px; color: var(--text-hint); padding: 8px 0 4px; font-weight: 500;">
+                        + скрыто ещё ${hiddenCount} (учтены в балансе)
+                    </div>`;
+            }
+
         } else { impulsesContainer.style.display = 'none'; }
 
         totalSavedAmountEl.textContent = grandTotal.toLocaleString('ru-RU') + ' ₽';
@@ -589,7 +609,6 @@
             `;
         }).join('');
         
-        // Обертка в setTimeout для красивой анимации выезда столбиков
         document.getElementById('statsChart').innerHTML = chartHtml.replace(/height: ([0-9.]+)%/g, 'height: 0%');
         setTimeout(() => {
             document.getElementById('statsChart').innerHTML = chartHtml;
