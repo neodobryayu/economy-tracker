@@ -8,7 +8,6 @@
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 16px; color: #2c3e50; }
         
-        /* Защищенные стили для кнопок */
         .action-btn { 
             -webkit-appearance: none;
             appearance: none;
@@ -69,26 +68,32 @@
         input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; cursor: pointer; }
         input:focus { border-color: #3498db; }
 
-        /* Модальное окно с прокруточным барабаном даты */
+        /* Идеально отцентрированное модальное окно */
         .wheel-modal {
             display: none;
             position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.4);
+            inset: 0;
+            width: 100vw;
+            height: 100vh;
+            height: 100dvh;
+            background: rgba(0, 0, 0, 0.45);
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            padding: 16px;
+            box-sizing: border-box;
         }
         .wheel-modal.active { display: flex; }
         .wheel-card-box {
             background: #ffffff;
             border-radius: 24px;
             padding: 24px;
-            width: 90%;
-            max-width: 340px;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+            width: 100%;
+            max-width: 320px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.15);
             text-align: center;
             box-sizing: border-box;
+            margin: auto;
         }
         .wheel-card-title {
             font-size: 18px;
@@ -103,17 +108,19 @@
             position: relative;
             margin-bottom: 20px;
             overflow: hidden;
+            background: #f8f9fa;
+            border-radius: 16px;
         }
-        /* Линии выделения выбранной строки */
         .wheel-indicator {
             position: absolute;
             top: 50px;
-            left: 0;
-            width: 100%;
+            left: 12px;
+            right: 12px;
             height: 40px;
             border-top: 2px solid #3498db;
             border-bottom: 2px solid #3498db;
             pointer-events: none;
+            z-index: 2;
         }
         .wheel-column {
             flex: 1;
@@ -124,6 +131,7 @@
             scrollbar-width: none;
             padding: 50px 0;
             box-sizing: border-box;
+            text-align: center;
         }
         .wheel-column::-webkit-scrollbar { display: none; }
         .wheel-item {
@@ -136,7 +144,8 @@
             color: #95a5a6;
             scroll-snap-align: center;
             cursor: pointer;
-            transition: color 0.15s;
+            transition: all 0.15s ease;
+            width: 100%;
         }
         .wheel-item.active {
             color: #2c3e50;
@@ -183,7 +192,6 @@
         <div class="wheel-card-title">Выберите дату старта</div>
         <div class="wheels-container">
             <div class="wheel-indicator"></div>
-            <!-- Колонки: День, Месяц, Год -->
             <div class="wheel-column" id="colDay" onscroll="onWheelScroll('day')"></div>
             <div class="wheel-column" id="colMonth" onscroll="onWheelScroll('month')"></div>
             <div class="wheel-column" id="colYear" onscroll="onWheelScroll('year')"></div>
@@ -206,12 +214,11 @@
 
     let editingIndex = null;
     let currentHabits = [];
-    let selectedDateValue = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    let selectedDateValue = new Date().toISOString().split('T')[0];
 
     const monthsNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     const monthsFullNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 
-    // Инициализация барабана дат
     function initWheelPicker(dateStr) {
         const date = dateStr ? new Date(dateStr) : new Date();
         const d = date.getDate();
@@ -226,23 +233,19 @@
         colMonth.innerHTML = '';
         colYear.innerHTML = '';
 
-        // Дни (1-31)
         for (let i = 1; i <= 31; i++) {
             colDay.innerHTML += `<div class="wheel-item" data-value="${i}">${i < 10 ? '0' + i : i}</div>`;
         }
 
-        // Месяцы
         monthsNames.forEach((mon, index) => {
             colMonth.innerHTML += `<div class="wheel-item" data-value="${index}">${mon}</div>`;
         });
 
-        // Годы (от 2020 до текущего)
         const currentYear = new Date().getFullYear();
         for (let yr = 2020; yr <= currentYear; yr++) {
             colYear.innerHTML += `<div class="wheel-item" data-value="${yr}">${yr}</div>`;
         }
 
-        // Устанавливаем скролл на нужные значения
         setTimeout(() => {
             scrollToValue('colDay', d);
             scrollToValue('colMonth', m);
@@ -306,12 +309,10 @@
         const month = getActiveVal('colMonth') || 0;
         const year = getActiveVal('colYear') || new Date().getFullYear();
 
-        // Проверка на валидность даты (например, 31 февраля)
         const maxDaysInMonth = new Date(year, month + 1, 0).getDate();
         const validDay = Math.min(day, maxDaysInMonth);
 
         const dateObj = new Date(year, month, validDay);
-        // Нельзя выбирать даты из будущего
         if (dateObj > new Date()) {
             tg.showAlert('Нельзя выбрать дату из будущего!');
             return;
@@ -530,7 +531,6 @@
     function showAddForm() { 
         dashboard.classList.remove('active'); 
         addForm.classList.add('active');
-        // Установка даты по умолчанию при открытии формы новой привычки
         if (editingIndex === null && !document.getElementById('startDateDisplay').value) {
             const today = new Date();
             selectedDateValue = today.toISOString().split('T')[0];
