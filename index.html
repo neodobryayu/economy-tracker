@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Трекер отказа</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <style>
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f4f6f8; margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 16px; color: #2c3e50; }
         
@@ -67,127 +66,82 @@
         .form-card h2 { margin-top: 0; color: #2c3e50; font-size: 20px;}
         .label { font-size: 14px; color: #7f8c8d; font-weight: 500; text-align: left; margin-bottom: 6px; }
         
-        input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; }
+        input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; cursor: pointer; }
         input:focus { border-color: #3498db; }
-        
-        /* Идеальная верстка и стилизация календаря Flatpickr */
-        .flatpickr-calendar { 
-            background: #ffffff !important;
-            border-radius: 24px !important; 
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12) !important; 
-            border: none !important; 
-            font-family: inherit !important; 
-            padding: 16px !important; 
-            width: 315px !important;
-            box-sizing: border-box !important;
+
+        /* Модальное окно с прокруточным барабаном даты */
+        .wheel-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
         }
-        .flatpickr-months {
-            display: flex !important;
-            align-items: center !important;
-            justify-content: space-between !important;
-            padding-bottom: 8px !important;
-            position: relative;
-        }
-        .flatpickr-month {
-            background: transparent !important;
-            color: #2c3e50 !important;
-            fill: #2c3e50 !important;
-            height: 40px !important;
-        }
-        /* Яркие и выраженные кнопки переключения месяцев */
-        .flatpickr-prev-month, .flatpickr-next-month {
-            background: #f1f3f5 !important;
-            border-radius: 12px !important;
-            height: 36px !important;
-            width: 36px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            top: 12px !important;
-            padding: 0 !important;
-            transition: background 0.2s !important;
-        }
-        .flatpickr-prev-month:hover, .flatpickr-next-month:hover {
-            background: #e2e8f0 !important;
-        }
-        .flatpickr-prev-month svg, .flatpickr-next-month svg {
-            width: 14px !important;
-            height: 14px !important;
-            fill: #2c3e50 !important;
-        }
-        .flatpickr-current-month {
-            font-size: 15px !important;
-            font-weight: 600 !important;
-            color: #2c3e50 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            gap: 6px !important;
-            position: static !important;
-            width: auto !important;
-            height: auto !important;
-            left: auto !important;
-            transform: none !important;
-            padding: 0 !important;
-        }
-        .flatpickr-current-month .flatpickr-monthDropdown-months,
-        .flatpickr-current-month input.numInput {
-            font-weight: 600 !important;
-            color: #2c3e50 !important;
-            background: #f8f9fa !important;
-            border: 1px solid #e2e8f0 !important;
-            border-radius: 10px !important;
-            padding: 6px 10px !important;
-            cursor: pointer;
-        }
-        .flatpickr-weekdays {
-            background: transparent !important;
-            margin-top: 10px !important;
+        .wheel-modal.active { display: flex; }
+        .wheel-card-box {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 24px;
+            width: 90%;
+            max-width: 340px;
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
             text-align: center;
+            box-sizing: border-box;
         }
-        span.flatpickr-weekday {
-            color: #95a5a6 !important;
-            font-weight: 600 !important;
-            font-size: 13px !important;
+        .wheel-card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            margin-bottom: 16px;
         }
-        .flatpickr-days {
-            width: 100% !important;
+        .wheels-container {
+            display: flex;
+            justify-content: space-between;
+            height: 140px;
+            position: relative;
+            margin-bottom: 20px;
+            overflow: hidden;
         }
-        .dayContainer {
-            width: 100% !important;
-            min-width: 100% !important;
-            max-width: 100% !important;
-            justify-content: space-around !important;
+        /* Линии выделения выбранной строки */
+        .wheel-indicator {
+            position: absolute;
+            top: 50px;
+            left: 0;
+            width: 100%;
+            height: 40px;
+            border-top: 2px solid #3498db;
+            border-bottom: 2px solid #3498db;
+            pointer-events: none;
         }
-        .flatpickr-day {
-            border-radius: 12px !important;
-            color: #2c3e50 !important;
-            font-weight: 500 !important;
-            height: 38px !important;
-            line-height: 38px !important;
-            margin: 2px !important;
-            max-width: 38px !important;
-            flex-basis: 38px !important;
+        .wheel-column {
+            flex: 1;
+            height: 100%;
+            overflow-y: scroll;
+            scroll-snap-type: y mandatory;
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+            padding: 50px 0;
+            box-sizing: border-box;
         }
-        .flatpickr-day.selected {
-            background: #2c3e50 !important;
-            color: #ffffff !important;
-            border-color: #2c3e50 !important;
+        .wheel-column::-webkit-scrollbar { display: none; }
+        .wheel-item {
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            font-weight: 500;
+            color: #95a5a6;
+            scroll-snap-align: center;
+            cursor: pointer;
+            transition: color 0.15s;
         }
-        .flatpickr-day.today {
-            border: 2px solid #3498db !important;
-            background: transparent !important;
-            color: #2c3e50 !important;
-        }
-        .flatpickr-day.today.selected {
-            background: #2c3e50 !important;
-            color: #ffffff !important;
-        }
-        .flatpickr-day:hover {
-            background: #f1f3f5 !important;
-        }
-        .flatpickr-day.prevMonthDay, .flatpickr-day.nextMonthDay {
-            color: #cbd5e1 !important;
+        .wheel-item.active {
+            color: #2c3e50;
+            font-weight: 700;
+            font-size: 19px;
         }
 
         #dashboard, #add-form { display: none; }
@@ -215,7 +169,7 @@
         <div class="label">Название:</div>
         <input type="text" id="habitName" placeholder="Например: Кофе с собой">
         <div class="label">Дата старта:</div>
-        <input type="text" id="startDate" placeholder="Выберите дату старта">
+        <input type="text" id="startDateDisplay" placeholder="Нажмите для выбора даты" readonly onclick="openWheelPicker()">
         <div class="label">Экономия в день (₽):</div>
         <input type="number" id="dailyAmount" placeholder="Например: 200">
         <button class="action-btn btn-primary" onclick="saveHabit()">Сохранить</button>
@@ -223,8 +177,20 @@
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/ru.js"></script>
+<!-- Модальное окно кастомного прокруточного выбора даты -->
+<div class="wheel-modal" id="wheelModal">
+    <div class="wheel-card-box">
+        <div class="wheel-card-title">Выберите дату старта</div>
+        <div class="wheels-container">
+            <div class="wheel-indicator"></div>
+            <!-- Колонки: День, Месяц, Год -->
+            <div class="wheel-column" id="colDay" onscroll="onWheelScroll('day')"></div>
+            <div class="wheel-column" id="colMonth" onscroll="onWheelScroll('month')"></div>
+            <div class="wheel-column" id="colYear" onscroll="onWheelScroll('year')"></div>
+        </div>
+        <button class="action-btn btn-primary" onclick="confirmWheelDate()">Готово</button>
+    </div>
+</div>
 
 <script>
     const tg = window.Telegram.WebApp;
@@ -240,15 +206,121 @@
 
     let editingIndex = null;
     let currentHabits = [];
+    let selectedDateValue = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
 
-    flatpickr("#startDate", {
-        locale: "ru",
-        dateFormat: "Y-m-d",
-        altInput: true,
-        altFormat: "j F Y",
-        maxDate: "today",
-        disableMobile: "true"
-    });
+    const monthsNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
+    const monthsFullNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
+
+    // Инициализация барабана дат
+    function initWheelPicker(dateStr) {
+        const date = dateStr ? new Date(dateStr) : new Date();
+        const d = date.getDate();
+        const m = date.getMonth();
+        const y = date.getFullYear();
+
+        const colDay = document.getElementById('colDay');
+        const colMonth = document.getElementById('colMonth');
+        const colYear = document.getElementById('colYear');
+
+        colDay.innerHTML = '';
+        colMonth.innerHTML = '';
+        colYear.innerHTML = '';
+
+        // Дни (1-31)
+        for (let i = 1; i <= 31; i++) {
+            colDay.innerHTML += `<div class="wheel-item" data-value="${i}">${i < 10 ? '0' + i : i}</div>`;
+        }
+
+        // Месяцы
+        monthsNames.forEach((mon, index) => {
+            colMonth.innerHTML += `<div class="wheel-item" data-value="${index}">${mon}</div>`;
+        });
+
+        // Годы (от 2020 до текущего)
+        const currentYear = new Date().getFullYear();
+        for (let yr = 2020; yr <= currentYear; yr++) {
+            colYear.innerHTML += `<div class="wheel-item" data-value="${yr}">${yr}</div>`;
+        }
+
+        // Устанавливаем скролл на нужные значения
+        setTimeout(() => {
+            scrollToValue('colDay', d);
+            scrollToValue('colMonth', m);
+            scrollToValue('colYear', y);
+            updateWheelActive('day');
+            updateWheelActive('month');
+            updateWheelActive('year');
+        }, 50);
+    }
+
+    function scrollToValue(colId, val) {
+        const col = document.getElementById(colId);
+        const items = col.querySelectorAll('.wheel-item');
+        for (let item of items) {
+            if (parseInt(item.getAttribute('data-value')) === val) {
+                col.scrollTop = item.offsetTop - col.offsetTop - 50;
+                break;
+            }
+        }
+    }
+
+    function onWheelScroll(type) {
+        updateWheelActive(type);
+    }
+
+    function updateWheelActive(type) {
+        const col = document.getElementById(type === 'day' ? 'colDay' : type === 'month' ? 'colMonth' : 'colYear');
+        const items = col.querySelectorAll('.wheel-item');
+        const scrollTop = col.scrollTop;
+        
+        let closestItem = null;
+        let minDiff = Infinity;
+
+        items.forEach(item => {
+            const diff = Math.abs(item.offsetTop - col.offsetTop - 50 - scrollTop);
+            if (diff < minDiff) {
+                minDiff = diff;
+                closestItem = item;
+            }
+        });
+
+        items.forEach(item => item.classList.remove('active'));
+        if (closestItem) {
+            closestItem.classList.add('active');
+        }
+    }
+
+    function openWheelPicker() {
+        initWheelPicker(selectedDateValue);
+        document.getElementById('wheelModal').classList.add('active');
+    }
+
+    function confirmWheelDate() {
+        const getActiveVal = (colId) => {
+            const col = document.getElementById(colId);
+            const active = col.querySelector('.wheel-item.active');
+            return active ? parseInt(active.getAttribute('data-value')) : null;
+        };
+
+        const day = getActiveVal('colDay') || 1;
+        const month = getActiveVal('colMonth') || 0;
+        const year = getActiveVal('colYear') || new Date().getFullYear();
+
+        // Проверка на валидность даты (например, 31 февраля)
+        const maxDaysInMonth = new Date(year, month + 1, 0).getDate();
+        const validDay = Math.min(day, maxDaysInMonth);
+
+        const dateObj = new Date(year, month, validDay);
+        // Нельзя выбирать даты из будущего
+        if (dateObj > new Date()) {
+            tg.showAlert('Нельзя выбрать дату из будущего!');
+            return;
+        }
+
+        selectedDateValue = `${year}-${String(month + 1).padStart(2, '0')}-${String(validDay).padStart(2, '0')}`;
+        document.getElementById('startDateDisplay').value = `${validDay} ${monthsFullNames[month]} ${year}`;
+        document.getElementById('wheelModal').classList.remove('active');
+    }
 
     function getUserId() {
         return tg.initDataUnsafe?.user?.id || 'test_user_pc';
@@ -370,7 +442,11 @@
     function editHabit(index) {
         const habit = currentHabits[index];
         document.getElementById('habitName').value = habit.name;
-        document.getElementById('startDate').value = habit.date;
+        
+        selectedDateValue = habit.date;
+        const dObj = new Date(habit.date);
+        document.getElementById('startDateDisplay').value = `${dObj.getDate()} ${monthsFullNames[dObj.getMonth()]} ${dObj.getFullYear()}`;
+
         document.getElementById('dailyAmount').value = habit.amount;
         document.getElementById('formTitle').textContent = 'Изменить трекер';
         editingIndex = index;
@@ -428,7 +504,7 @@
 
     function saveHabit() {
         const name = document.getElementById('habitName').value;
-        const date = document.getElementById('startDate').value;
+        const date = selectedDateValue;
         const amount = document.getElementById('dailyAmount').value;
 
         if (!name || !date || !amount) { tg.showAlert('Пожалуйста, заполните все поля!'); return; }
@@ -444,7 +520,6 @@
         syncToCloud(habits);
         
         document.getElementById('habitName').value = '';
-        document.getElementById('startDate').value = '';
         document.getElementById('dailyAmount').value = '';
         document.getElementById('formTitle').textContent = 'Новая причина экономии';
 
@@ -454,7 +529,13 @@
 
     function showAddForm() { 
         dashboard.classList.remove('active'); 
-        addForm.classList.add('active'); 
+        addForm.classList.add('active');
+        // Установка даты по умолчанию при открытии формы новой привычки
+        if (editingIndex === null && !document.getElementById('startDateDisplay').value) {
+            const today = new Date();
+            selectedDateValue = today.toISOString().split('T')[0];
+            document.getElementById('startDateDisplay').value = `${today.getDate()} ${monthsFullNames[today.getMonth()]} ${today.getFullYear()}`;
+        }
     }
 
     function showDashboard() {
