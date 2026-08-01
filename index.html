@@ -72,19 +72,20 @@
         .wheel-modal {
             display: none;
             position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+            top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.5);
             z-index: 1000;
-            justify-content: center;
-            align-items: center;
-            padding: 16px;
         }
-        .wheel-modal.active { display: flex; }
+        .wheel-modal.active { display: block; }
         .wheel-card-box {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             background: #ffffff;
             border-radius: 24px;
             padding: 24px;
-            width: 100%;
+            width: 90%;
             max-width: 320px;
             box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
             text-align: center;
@@ -127,7 +128,6 @@
             scroll-snap-type: y mandatory;
             -ms-overflow-style: none;
             scrollbar-width: none;
-            /* УБРАЛИ PADDING, теперь используются spacers */
             box-sizing: border-box;
             text-align: center;
             position: relative;
@@ -238,7 +238,6 @@
         const colMonth = document.getElementById('colMonth');
         const colYear = document.getElementById('colYear');
 
-        // Использование реальных DOM-элементов вместо CSS padding для идеальной геометрии
         let dayHtml = '<div class="wheel-spacer"></div>';
         for (let i = 1; i <= 31; i++) {
             dayHtml += `<div class="wheel-item" data-value="${i}">${i < 10 ? '0' + i : i}</div>`;
@@ -276,7 +275,6 @@
         const items = col.querySelectorAll('.wheel-item');
         for (let item of items) {
             if (parseInt(item.getAttribute('data-value')) === val) {
-                // Идеальный скролл ровно до элемента минус высота спейсера (44px)
                 col.scrollTop = item.offsetTop - 44;
                 break;
             }
@@ -296,7 +294,6 @@
         let minDiff = Infinity;
 
         items.forEach(item => {
-            // Вычисляем дистанцию текущего элемента до центральной зоны (которая начинается ровно с 44px)
             const currentY = item.offsetTop - scrollTop;
             const diff = Math.abs(currentY - 44);
             if (diff < minDiff) {
