@@ -56,6 +56,7 @@
     <div id="habitsList" style="margin-bottom: 16px;"></div>
     
     <button class="action-btn btn-primary" onclick="showAddForm()">Добавить трекер</button>
+    <button class="action-btn btn-secondary" style="color: #e74c3c; border-color: #e74c3c;" onclick="resetAllData()">Начать все сначала</button>
 </div>
 
 <!-- Экран добавления/редактирования привычки -->
@@ -77,8 +78,6 @@
     const tg = window.Telegram.WebApp;
     tg.expand();
 
-    // СЮДА ВСТАВЬТЕ ССЫЛКУ ИЗ FIREBASE (обязательно с /habits.json на конце)
-    // Пример: const FIREBASE_URL = 'https://my-project-default-rtdb.firebaseio.com/habits';
     const FIREBASE_URL = 'https://economy-tracker-f8842-default-rtdb.firebaseio.com/'; 
 
     const dashboard = document.getElementById('dashboard');
@@ -100,7 +99,6 @@
         const userId = getUserId();
         
         if (FIREBASE_URL.includes('ВАША_ССЫЛКА')) {
-            // Резервный режим, если ссылку еще не вставили
             currentHabits = JSON.parse(localStorage.getItem('userHabits')) || [];
             handleHabitsLoaded();
             return;
@@ -121,7 +119,7 @@
     }
 
     function handleHabitsLoaded() {
-        if (currentHabits.length > 0) {
+        if (currentHabits && currentHabits.length > 0) {
             renderHabits(currentHabits);
             showDashboard();
         } else {
@@ -144,6 +142,16 @@
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(habits)
         }).catch(err => console.log('Ошибка синхронизации с облаком'));
+    }
+
+    // Полный сброс всех данных
+    function resetAllData() {
+        tg.showConfirm('Точно удалить все трекеры и начать сначала?', function(confirmed) {
+            if (confirmed) {
+                syncToCloud([]);
+                loadApp();
+            }
+        });
     }
 
     function toggleHabit(element) {
@@ -283,7 +291,7 @@
     }
 
     function showDashboard() {
-        if (currentHabits.length === 0) return; 
+        if (!currentHabits || currentHabits.length === 0) return; 
         editingIndex = null;
         addForm.classList.remove('active');
         dashboard.classList.add('active');
