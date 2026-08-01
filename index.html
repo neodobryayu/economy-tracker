@@ -61,6 +61,13 @@
         .stat-label { font-size: 12px; font-weight: 500; margin-bottom: 6px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-value { font-size: 26px; font-weight: 700; line-height: 1.2; }
         
+        /* Стили для прогресс-бара */
+        .progress-wrapper { margin-top: 4px; padding: 0 4px; }
+        .progress-header { display: flex; justify-content: space-between; font-size: 13px; color: #7f8c8d; margin-bottom: 8px; font-weight: 500; }
+        .progress-track { background-color: #f1f3f5; border-radius: 8px; height: 10px; overflow: hidden; width: 100%; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
+        .progress-fill { background-color: #3498db; height: 100%; border-radius: 8px; transition: width 0.5s ease-out; }
+        .progress-fill.completed { background-color: #2e7d32; }
+
         .form-card { background-color: #ffffff; border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); }
         .form-card h2 { margin-top: 0; color: #2c3e50; font-size: 20px;}
         .label { font-size: 14px; color: #7f8c8d; font-weight: 500; text-align: left; margin-bottom: 6px; }
@@ -68,7 +75,7 @@
         input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; cursor: pointer; }
         input:focus { border-color: #3498db; }
 
-        /* --- ИДЕАЛЬНОЕ ЦЕНТРИРОВАНИЕ ОКНА --- */
+        /* Модальное окно и барабан */
         .wheel-modal {
             display: none;
             position: fixed;
@@ -91,18 +98,12 @@
             text-align: center;
             box-sizing: border-box;
         }
-        .wheel-card-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: #2c3e50;
-            margin-bottom: 16px;
-        }
+        .wheel-card-title { font-size: 18px; font-weight: 700; color: #2c3e50; margin-bottom: 16px; }
         
-        /* --- ИДЕАЛЬНЫЙ БАРАБАН --- */
         .wheels-container {
             display: flex;
             justify-content: space-between;
-            height: 132px; /* Строго 44px * 3 строки */
+            height: 132px; 
             position: relative;
             margin-bottom: 20px;
             overflow: hidden;
@@ -111,7 +112,7 @@
         }
         .wheel-indicator {
             position: absolute;
-            top: 44px; /* Строго вторая строка */
+            top: 44px;
             left: 12px;
             right: 12px;
             height: 44px;
@@ -134,14 +135,10 @@
         }
         .wheel-column::-webkit-scrollbar { display: none; }
         
-        .wheel-spacer {
-            height: 44px;
-            min-height: 44px;
-            width: 100%;
-        }
+        .wheel-spacer { height: 44px; min-height: 44px; width: 100%; }
         .wheel-item {
             height: 44px;
-            line-height: 44px; /* Прибивает текст строго по центру */
+            line-height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -190,6 +187,11 @@
         <input type="text" id="startDateDisplay" placeholder="Нажмите для выбора даты" readonly onclick="openWheelPicker()">
         <div class="label">Экономия в день (₽):</div>
         <input type="number" id="dailyAmount" placeholder="Например: 200">
+        
+        <!-- Новое поле для цели -->
+        <div class="label">Сумма цели (₽, необязательно):</div>
+        <input type="number" id="goalAmount" placeholder="Например: 15000">
+
         <button class="action-btn btn-primary" onclick="saveHabit()">Сохранить</button>
         <button class="action-btn btn-secondary" onclick="showDashboard()">Назад</button>
     </div>
@@ -464,6 +466,10 @@
         document.getElementById('startDateDisplay').value = `${dObj.getDate()} ${monthsFullNames[dObj.getMonth()]} ${dObj.getFullYear()}`;
 
         document.getElementById('dailyAmount').value = habit.amount;
+        
+        // Заполняем поле цели, если оно было
+        document.getElementById('goalAmount').value = habit.goalAmount || '';
+        
         document.getElementById('formTitle').textContent = 'Изменить трекер';
         editingIndex = index;
         showAddForm();
@@ -486,6 +492,27 @@
             const totalSaved = diffDays * parseFloat(habit.amount);
             grandTotal += totalSaved;
 
+            // Логика прогресс-бара
+            let progressHTML = '';
+            if (habit.goalAmount && !isNaN(parseFloat(habit.goalAmount)) && parseFloat(habit.goalAmount) > 0) {
+                const goal = parseFloat(habit.goalAmount);
+                let percent = (totalSaved / goal) * 100;
+                const isCompleted = percent >= 100;
+                const displayPercent = percent > 100 ? 100 : percent;
+
+                progressHTML = `
+                    <div class="progress-wrapper">
+                        <div class="progress-header">
+                            <span>Цель: ${goal.toLocaleString('ru-RU')} ₽</span>
+                            <span>${Math.floor(percent)}%</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill ${isCompleted ? 'completed' : ''}" style="width: ${displayPercent}%"></div>
+                        </div>
+                    </div>
+                `;
+            }
+
             const habitHTML = `
                 <div class="habit-card" id="habit-card-${index}">
                     <div class="habit-title-bar" onclick="toggleHabit(this)">
@@ -503,6 +530,7 @@
                                 <span class="stat-value">${totalSaved.toLocaleString('ru-RU')} ₽</span>
                             </div>
                         </div>
+                        ${progressHTML}
                     </div>
                 </div>
             `;
@@ -522,21 +550,23 @@
         const name = document.getElementById('habitName').value;
         const date = selectedDateValue;
         const amount = document.getElementById('dailyAmount').value;
+        const goalAmount = document.getElementById('goalAmount').value;
 
-        if (!name || !date || !amount) { tg.showAlert('Пожалуйста, заполните все поля!'); return; }
+        if (!name || !date || !amount) { tg.showAlert('Пожалуйста, заполните все обязательные поля!'); return; }
 
         let habits = [...currentHabits];
         if (editingIndex !== null) {
-            habits[editingIndex] = { name: name, date: date, amount: amount };
+            habits[editingIndex] = { name: name, date: date, amount: amount, goalAmount: goalAmount };
             editingIndex = null;
         } else {
-            habits.push({ name: name, date: date, amount: amount });
+            habits.push({ name: name, date: date, amount: amount, goalAmount: goalAmount });
         }
 
         syncToCloud(habits);
         
         document.getElementById('habitName').value = '';
         document.getElementById('dailyAmount').value = '';
+        document.getElementById('goalAmount').value = '';
         document.getElementById('formTitle').textContent = 'Новая причина экономии';
 
         renderHabits(habits);
