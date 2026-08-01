@@ -24,30 +24,23 @@
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-main); margin: 0; padding: 20px; display: flex; flex-direction: column; gap: 16px; color: var(--text-main); }
         
         .action-btn { 
-            -webkit-appearance: none;
-            appearance: none;
-            background-color: var(--bg-card); 
-            color: var(--text-main); 
-            border-radius: 20px; 
-            text-align: center; 
-            padding: 16px; 
-            font-size: 17px; 
-            font-weight: 600; 
-            box-sizing: border-box; 
-            width: 100%; 
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03); 
-            border: none; 
-            cursor: pointer; 
-            transition: background-color 0.2s, transform 0.1s; 
-            display: block;
-            text-decoration: none;
+            -webkit-appearance: none; appearance: none;
+            background-color: var(--bg-card); color: var(--text-main); 
+            border-radius: 20px; text-align: center; padding: 16px; 
+            font-size: 17px; font-weight: 600; box-sizing: border-box; 
+            width: 100%; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03); 
+            border: none; cursor: pointer; transition: transform 0.1s; 
+            display: block; text-decoration: none;
         }
         .action-btn:active { transform: scale(0.98); }
-        
-        .btn-primary { background-color: var(--btn-main) !important; color: var(--btn-text) !important; }
+        .btn-primary { background-color: var(--btn-main) !important; color: var(--btn-text) !important; margin-top: 8px; }
         .btn-secondary { background-color: transparent !important; color: var(--text-hint) !important; border: 1px solid var(--border-color) !important; margin-top: 12px; }
 
-        .total-card { background-color: var(--bg-card); border-radius: 20px; padding: 24px 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); text-align: center; }
+        /* Карточка баланса с иконкой настроек */
+        .total-card { position: relative; background-color: var(--bg-card); border-radius: 20px; padding: 24px 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); text-align: center; }
+        .settings-icon { position: absolute; top: 16px; right: 16px; color: var(--text-hint); cursor: pointer; padding: 8px; margin: -8px; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
+        .settings-icon:active { color: var(--text-main); }
+        
         .total-title { font-size: 14px; font-weight: 500; color: var(--text-hint); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         .total-amount { color: var(--text-main); font-size: 34px; font-weight: 700; line-height: 1.2; }
         
@@ -68,7 +61,7 @@
         .stat-label { font-size: 12px; font-weight: 500; margin-bottom: 6px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-value { font-size: 26px; font-weight: 700; line-height: 1.2; }
         
-        /* Стили для разовых отказов (импульсивных покупок) */
+        /* Разовые отказы */
         .impulse-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-main); border-radius: 12px; }
         .impulse-info { display: flex; flex-direction: column; text-align: left; }
         .impulse-name { font-weight: 600; font-size: 15px; color: var(--text-main); }
@@ -93,10 +86,6 @@
         input:focus { border-color: var(--btn-main); }
         input::placeholder { color: var(--text-hint); opacity: 0.7; }
 
-        /* Сетка для кнопок главного экрана */
-        .btn-grid { display: flex; gap: 12px; margin-top: 8px; }
-        .btn-grid .action-btn { margin-top: 0; flex: 1; padding: 14px 10px; font-size: 15px; }
-
         /* Модальное окно и барабан */
         .wheel-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1000; }
         .wheel-modal.active { display: block; }
@@ -118,6 +107,15 @@
 
 <div id="dashboard" class="screen active">
     <div class="total-card" id="totalCardContainer" style="display: none;">
+        <!-- Иконка настроек (три точки) -->
+        <div class="settings-icon" onclick="showSettingsMenu()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="1.5"></circle>
+                <circle cx="12" cy="5" r="1.5"></circle>
+                <circle cx="12" cy="19" r="1.5"></circle>
+            </svg>
+        </div>
+        
         <div class="total-title">Общая экономия</div>
         <div class="total-amount" id="totalSavedAmount">0 ₽</div>
         <div id="globalProgressContainer" style="display: none;"></div>
@@ -125,26 +123,19 @@
     
     <div id="habitsList" style="margin-bottom: 16px;"></div>
     
-    <!-- Карточка разовых отказов (появляется только если есть записи) -->
+    <!-- Карточка разовых отказов -->
     <div id="impulsesContainer" style="margin-bottom: 16px; display: none;">
         <div class="habit-card collapsed" id="impulsesCard">
             <div class="habit-title-bar" onclick="toggleHabit(this)">
                 <span>Разовые отказы</span>
                 <span class="arrow-icon">▼</span>
             </div>
-            <div class="habit-content" id="impulsesList">
-                <!-- Здесь будут записи -->
-            </div>
+            <div class="habit-content" id="impulsesList"></div>
         </div>
     </div>
     
-    <div class="btn-grid">
-        <button class="action-btn btn-primary" onclick="showAddForm()">+ Привычка</button>
-        <button class="action-btn" style="background-color: var(--bg-card); color: var(--btn-main); border: 1px solid var(--border-color);" onclick="showImpulseForm()">+ Не купил</button>
-    </div>
-    
-    <button class="action-btn" style="background-color: var(--bg-main); color: var(--text-main); margin-top: 12px;" onclick="showGoalForm()" id="goalBtn">Добавить цель</button>
-    <button class="action-btn btn-secondary" style="color: var(--danger) !important; border-color: var(--danger) !important;" onclick="resetAllData()">Начать все сначала</button>
+    <!-- Одна главная кнопка вместо кучи старых -->
+    <button class="action-btn btn-primary" onclick="showAddMenu()">+ Добавить</button>
 </div>
 
 <!-- Экран добавления привычки -->
@@ -220,11 +211,10 @@
     const totalCardContainer = document.getElementById('totalCardContainer');
     const totalSavedAmountEl = document.getElementById('totalSavedAmount');
     const globalProgressContainer = document.getElementById('globalProgressContainer');
-    const goalBtn = document.getElementById('goalBtn');
 
     let editingIndex = null;
     let currentHabits = [];
-    let oneTimeSaves = []; // Массив для разовых отказов
+    let oneTimeSaves = []; 
     let globalGoal = null; 
     let selectedDateValue = new Date().toISOString().split('T')[0];
 
@@ -236,7 +226,36 @@
         document.getElementById(screenId).classList.add('active');
     }
 
-    // --- БАРАБАН ДАТЫ (Без изменений) ---
+    // --- НОВЫЕ НАТИВНЫЕ МЕНЮ (Popup) ---
+    function showAddMenu() {
+        tg.showPopup({
+            title: 'Что добавим в копилку?',
+            buttons: [
+                { id: 'habit', type: 'default', text: 'Постоянную привычку' },
+                { id: 'impulse', type: 'default', text: 'Разовый отказ (Не купил)' },
+                { type: 'cancel' }
+            ]
+        }, function(buttonId) {
+            if (buttonId === 'habit') showAddForm();
+            if (buttonId === 'impulse') showImpulseForm();
+        });
+    }
+
+    function showSettingsMenu() {
+        tg.showPopup({
+            title: 'Настройки трекера',
+            buttons: [
+                { id: 'goal', type: 'default', text: globalGoal ? 'Изменить цель' : 'Установить цель' },
+                { id: 'reset', type: 'destructive', text: 'Начать всё сначала' },
+                { type: 'cancel' }
+            ]
+        }, function(buttonId) {
+            if (buttonId === 'goal') showGoalForm();
+            if (buttonId === 'reset') resetAllData();
+        });
+    }
+
+    // --- БАРАБАН ДАТЫ ---
     function initWheelPicker(dateStr) {
         const date = dateStr ? new Date(dateStr) : new Date();
         const d = date.getDate(), m = date.getMonth(), y = date.getFullYear();
@@ -281,71 +300,55 @@
         document.getElementById('wheelModal').classList.remove('active');
     }
 
-    // --- ДАННЫЕ И СИНХРОНИЗАЦИЯ ---
+    // --- ДАННЫЕ ---
     function getUserId() { return tg.initDataUnsafe?.user?.id || 'test_user_pc'; }
 
     function loadApp() {
         const userId = getUserId();
-        
-        if (FIREBASE_URL.includes('ВАША_ССЫЛКА')) {
-            parseLocalData(JSON.parse(localStorage.getItem('userData')));
-            return;
-        }
+        if (FIREBASE_URL.includes('ВАША_ССЫЛКА')) { parseLocalData(JSON.parse(localStorage.getItem('userData'))); return; }
 
         fetch(`${FIREBASE_URL}/${userId}.json`)
             .then(res => res.json())
             .then(data => {
                 if (Array.isArray(data)) { currentHabits = data; globalGoal = null; oneTimeSaves = []; } 
                 else if (data && typeof data === 'object') {
-                    currentHabits = data.habits || [];
-                    globalGoal = data.globalGoal || null;
-                    oneTimeSaves = data.oneTimeSaves || [];
+                    currentHabits = data.habits || []; globalGoal = data.globalGoal || null; oneTimeSaves = data.oneTimeSaves || [];
                 } else { currentHabits = []; globalGoal = null; oneTimeSaves = []; }
                 
-                syncToCloud(true); // Сохраняем локально сразу
-                renderDashboard();
+                syncToCloud(true); renderDashboard();
             })
             .catch(err => parseLocalData(JSON.parse(localStorage.getItem('userData'))));
     }
 
     function parseLocalData(localData) {
         if (localData && typeof localData === 'object' && !Array.isArray(localData)) {
-            currentHabits = localData.habits || [];
-            globalGoal = localData.globalGoal || null;
-            oneTimeSaves = localData.oneTimeSaves || [];
-        } else {
-            currentHabits = JSON.parse(localStorage.getItem('userHabits')) || [];
-        }
+            currentHabits = localData.habits || []; globalGoal = localData.globalGoal || null; oneTimeSaves = localData.oneTimeSaves || [];
+        } else { currentHabits = JSON.parse(localStorage.getItem('userHabits')) || []; }
         renderDashboard();
     }
 
     function syncToCloud(onlyLocal = false) {
         const payload = { habits: currentHabits, globalGoal: globalGoal, oneTimeSaves: oneTimeSaves };
         localStorage.setItem('userData', JSON.stringify(payload));
-
         if (FIREBASE_URL.includes('ВАША_ССЫЛКА') || onlyLocal) return;
-
-        fetch(`${FIREBASE_URL}/${getUserId()}.json`, {
-            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-        }).catch(err => console.log('Sync err'));
+        fetch(`${FIREBASE_URL}/${getUserId()}.json`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }).catch(e => {});
     }
 
     function resetAllData() {
         tg.showConfirm('Точно удалить все данные и начать сначала?', function(confirmed) {
             if (confirmed) {
                 currentHabits = []; globalGoal = null; oneTimeSaves = [];
-                syncToCloud();
-                showAddForm();
+                syncToCloud(); showAddForm();
             }
         });
     }
 
-    // --- ЛОГИКА ИНТЕРФЕЙСА ---
+    // --- ИНТЕРФЕЙС ---
     function toggleHabit(element) { element.closest('.habit-card').classList.toggle('collapsed'); }
 
     function renderDashboard() {
         if (currentHabits.length === 0 && oneTimeSaves.length === 0) {
-            showAddForm();
+            showAddMenu(); // Если ничего нет, сразу предлагаем добавить
             return;
         }
         
@@ -356,7 +359,6 @@
         const today = new Date();
         today.setHours(0,0,0,0);
 
-        // 1. Отрисовка привычек
         currentHabits.forEach((habit, index) => {
             const startDate = new Date(habit.date);
             startDate.setHours(0,0,0,0);
@@ -372,48 +374,30 @@
                     </div>
                     <div class="habit-content">
                         <div class="habit-stats-row">
-                            <div class="stat-box stat-days">
-                                <div class="stat-label">Дней</div><span class="stat-value">${diffDays}</span>
-                            </div>
-                            <div class="stat-box stat-money">
-                                <div class="stat-label">Сэкономлено</div><span class="stat-value">${totalSaved.toLocaleString('ru-RU')} ₽</span>
-                            </div>
+                            <div class="stat-box stat-days"><div class="stat-label">Дней</div><span class="stat-value">${diffDays}</span></div>
+                            <div class="stat-box stat-money"><div class="stat-label">Сэкономлено</div><span class="stat-value">${totalSaved.toLocaleString('ru-RU')} ₽</span></div>
                         </div>
                     </div>
                 </div>`;
         });
-
-        // Привязываем долгое нажатие
         currentHabits.forEach((_, index) => setupLongPress(document.getElementById(`habit-card-${index}`), index));
 
-        // 2. Отрисовка разовых отказов (импульсов)
         if (oneTimeSaves.length > 0) {
             impulsesContainer.style.display = 'block';
-            // Обратная сортировка, чтобы новые были сверху
             [...oneTimeSaves].reverse().forEach((impulse, reversedIndex) => {
                 const originalIndex = oneTimeSaves.length - 1 - reversedIndex;
                 grandTotal += parseFloat(impulse.amount);
-                
                 const dObj = new Date(impulse.date);
                 const dateStr = `${String(dObj.getDate()).padStart(2, '0')}.${String(dObj.getMonth()+1).padStart(2, '0')}.${dObj.getFullYear()}`;
                 
                 impulsesListEl.innerHTML += `
                     <div class="impulse-item">
-                        <div class="impulse-info">
-                            <span class="impulse-name">${impulse.name}</span>
-                            <span class="impulse-date">${dateStr}</span>
-                        </div>
-                        <div class="impulse-right">
-                            <span class="impulse-amount">+${parseFloat(impulse.amount).toLocaleString('ru-RU')} ₽</span>
-                            <span class="impulse-delete" onclick="deleteImpulse(${originalIndex})">✕</span>
-                        </div>
+                        <div class="impulse-info"><span class="impulse-name">${impulse.name}</span><span class="impulse-date">${dateStr}</span></div>
+                        <div class="impulse-right"><span class="impulse-amount">+${parseFloat(impulse.amount).toLocaleString('ru-RU')} ₽</span><span class="impulse-delete" onclick="deleteImpulse(${originalIndex})">✕</span></div>
                     </div>`;
             });
-        } else {
-            impulsesContainer.style.display = 'none';
-        }
+        } else { impulsesContainer.style.display = 'none'; }
 
-        // 3. Общий блок и прогресс бар
         totalSavedAmountEl.textContent = grandTotal.toLocaleString('ru-RU') + ' ₽';
         totalCardContainer.style.display = 'block';
 
@@ -423,22 +407,12 @@
             globalProgressContainer.style.display = 'block';
             globalProgressContainer.innerHTML = `
                 <div class="progress-wrapper">
-                    <div class="progress-header">
-                        <span>Цель: ${goal.toLocaleString('ru-RU')} ₽</span>
-                        <span>${Math.floor(percent)}%</span>
-                    </div>
-                    <div class="progress-track">
-                        <div class="progress-fill ${percent >= 100 ? 'completed' : ''}" style="width: ${Math.min(percent, 100)}%"></div>
-                    </div>
+                    <div class="progress-header"><span>Цель: ${goal.toLocaleString('ru-RU')} ₽</span><span>${Math.floor(percent)}%</span></div>
+                    <div class="progress-track"><div class="progress-fill ${percent >= 100 ? 'completed' : ''}" style="width: ${Math.min(percent, 100)}%"></div></div>
                 </div>`;
-            goalBtn.textContent = 'Изменить цель';
-        } else {
-            globalProgressContainer.style.display = 'none';
-            goalBtn.textContent = 'Добавить цель';
-        }
+        } else { globalProgressContainer.style.display = 'none'; }
     }
 
-    // --- УПРАВЛЕНИЕ ПРИВЫЧКАМИ ---
     function showAddForm() {
         switchScreen('add-form');
         if (editingIndex === null && !document.getElementById('startDateDisplay').value) {
@@ -451,10 +425,8 @@
     function saveHabit() {
         const name = document.getElementById('habitName').value, amount = document.getElementById('dailyAmount').value;
         if (!name || !selectedDateValue || !amount) { tg.showAlert('Пожалуйста, заполните все поля!'); return; }
-
         if (editingIndex !== null) currentHabits[editingIndex] = { name, date: selectedDateValue, amount };
         else currentHabits.push({ name, date: selectedDateValue, amount });
-        
         syncToCloud();
         document.getElementById('habitName').value = ''; document.getElementById('dailyAmount').value = '';
         document.getElementById('formTitle').textContent = 'Новая причина экономии';
@@ -480,20 +452,14 @@
         });
     }
 
-    // --- УПРАВЛЕНИЕ РАЗОВЫМИ ОТКАЗАМИ ---
     function showImpulseForm() { switchScreen('impulse-form'); }
 
     function saveImpulse() {
-        const name = document.getElementById('impulseName').value;
-        const amount = document.getElementById('impulseAmount').value;
+        const name = document.getElementById('impulseName').value, amount = document.getElementById('impulseAmount').value;
         if (!name || !amount) { tg.showAlert('Заполните все поля!'); return; }
-
-        const today = new Date().toISOString();
-        oneTimeSaves.push({ name, amount, date: today });
+        oneTimeSaves.push({ name, amount, date: new Date().toISOString() });
         syncToCloud();
-        
         document.getElementById('impulseName').value = ''; document.getElementById('impulseAmount').value = '';
-        // Автоматически открываем свернутую вкладку, чтобы человек увидел результат
         document.getElementById('impulsesCard').classList.remove('collapsed');
         renderDashboard();
     }
@@ -504,7 +470,6 @@
         });
     }
 
-    // --- УПРАВЛЕНИЕ ЦЕЛЬЮ ---
     function showGoalForm() {
         switchScreen('goal-form');
         document.getElementById('globalGoalInput').value = globalGoal || '';
@@ -520,7 +485,6 @@
     function deleteGoal() { globalGoal = null; syncToCloud(); renderDashboard(); }
     function showDashboard() { editingIndex = null; renderDashboard(); }
 
-    // Долгое нажатие для привычек
     function setupLongPress(element, index) {
         let pressTimer = null, isLongPress = false;
         const startPress = () => { isLongPress = false; pressTimer = setTimeout(() => { isLongPress = true; showHabitMenu(index); }, 500); };
