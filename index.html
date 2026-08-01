@@ -36,7 +36,7 @@
         .btn-primary { background-color: var(--btn-main) !important; color: var(--btn-text) !important; margin-top: 8px; }
         .btn-secondary { background-color: transparent !important; color: var(--text-hint) !important; border: 1px solid var(--border-color) !important; margin-top: 12px; }
 
-        /* Карточка баланса с иконкой настроек */
+        /* Карточка баланса */
         .total-card { position: relative; background-color: var(--bg-card); border-radius: 20px; padding: 24px 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); text-align: center; }
         .settings-icon { position: absolute; top: 16px; right: 16px; color: var(--text-hint); cursor: pointer; padding: 8px; margin: -8px; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
         .settings-icon:active { color: var(--text-main); }
@@ -86,6 +86,18 @@
         input:focus { border-color: var(--btn-main); }
         input::placeholder { color: var(--text-hint); opacity: 0.7; }
 
+        /* --- КАСТОМНЫЕ ВЫЕЗЖАЮЩИЕ МЕНЮ (Bottom Sheets) --- */
+        .bottom-sheet { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 2000; align-items: flex-end; opacity: 0; transition: opacity 0.3s ease; }
+        .bottom-sheet.active { opacity: 1; }
+        .sheet-content { background: var(--bg-card); width: 100%; border-radius: 24px 24px 0 0; padding: 24px 24px 40px; box-sizing: border-box; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1); }
+        .bottom-sheet.active .sheet-content { transform: translateY(0); }
+        
+        .sheet-title { font-size: 18px; font-weight: 700; text-align: center; margin-bottom: 20px; color: var(--text-main); }
+        .sheet-btn { background: var(--bg-main); color: var(--text-main); border-radius: 16px; padding: 16px; text-align: center; font-size: 17px; font-weight: 600; margin-bottom: 12px; cursor: pointer; transition: filter 0.2s; }
+        .sheet-btn:active { filter: brightness(0.95); }
+        .sheet-btn.danger { color: var(--danger); background: rgba(231, 76, 60, 0.1); }
+        .sheet-cancel { background: transparent; color: var(--text-hint); margin-bottom: 0; }
+
         /* Модальное окно и барабан */
         .wheel-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1000; }
         .wheel-modal.active { display: block; }
@@ -107,12 +119,10 @@
 
 <div id="dashboard" class="screen active">
     <div class="total-card" id="totalCardContainer" style="display: none;">
-        <!-- Иконка настроек (три точки) -->
+        <!-- Иконка настроек -->
         <div class="settings-icon" onclick="showSettingsMenu()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="1.5"></circle>
-                <circle cx="12" cy="5" r="1.5"></circle>
-                <circle cx="12" cy="19" r="1.5"></circle>
+                <circle cx="12" cy="12" r="1.5"></circle><circle cx="12" cy="5" r="1.5"></circle><circle cx="12" cy="19" r="1.5"></circle>
             </svg>
         </div>
         
@@ -123,7 +133,6 @@
     
     <div id="habitsList" style="margin-bottom: 16px;"></div>
     
-    <!-- Карточка разовых отказов -->
     <div id="impulsesContainer" style="margin-bottom: 16px; display: none;">
         <div class="habit-card collapsed" id="impulsesCard">
             <div class="habit-title-bar" onclick="toggleHabit(this)">
@@ -134,8 +143,27 @@
         </div>
     </div>
     
-    <!-- Одна главная кнопка вместо кучи старых -->
     <button class="action-btn btn-primary" onclick="showAddMenu()">+ Добавить</button>
+</div>
+
+<!-- Кастомное выезжающее меню для добавления -->
+<div class="bottom-sheet" id="addMenuSheet" onclick="closeSheets()">
+    <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-title">Что добавим в копилку?</div>
+        <div class="sheet-btn" onclick="closeSheets(); showAddForm();">Постоянную привычку</div>
+        <div class="sheet-btn" onclick="closeSheets(); showImpulseForm();">Разовый отказ (Не купил)</div>
+        <div class="sheet-btn sheet-cancel" onclick="closeSheets()">Отмена</div>
+    </div>
+</div>
+
+<!-- Кастомное выезжающее меню для настроек -->
+<div class="bottom-sheet" id="settingsMenuSheet" onclick="closeSheets()">
+    <div class="sheet-content" onclick="event.stopPropagation()">
+        <div class="sheet-title">Настройки трекера</div>
+        <div class="sheet-btn" onclick="closeSheets(); showGoalForm();" id="sheetGoalBtn">Установить цель</div>
+        <div class="sheet-btn danger" onclick="closeSheets(); resetAllData();">Начать всё сначала</div>
+        <div class="sheet-btn sheet-cancel" onclick="closeSheets()">Отмена</div>
+    </div>
 </div>
 
 <!-- Экран добавления привычки -->
@@ -153,7 +181,7 @@
     </div>
 </div>
 
-<!-- Экран добавления разовой покупки (Соблазна) -->
+<!-- Экран добавления разовой покупки -->
 <div id="impulse-form" class="screen">
     <div class="form-card">
         <h2>Молодец! Что не купили?</h2>
@@ -226,32 +254,24 @@
         document.getElementById(screenId).classList.add('active');
     }
 
-    // --- НОВЫЕ НАТИВНЫЕ МЕНЮ (Popup) ---
+    // --- УПРАВЛЕНИЕ МЕНЮ (Шторками) ---
     function showAddMenu() {
-        tg.showPopup({
-            title: 'Что добавим в копилку?',
-            buttons: [
-                { id: 'habit', type: 'default', text: 'Постоянную привычку' },
-                { id: 'impulse', type: 'default', text: 'Разовый отказ (Не купил)' },
-                { type: 'cancel' }
-            ]
-        }, function(buttonId) {
-            if (buttonId === 'habit') showAddForm();
-            if (buttonId === 'impulse') showImpulseForm();
-        });
+        const sheet = document.getElementById('addMenuSheet');
+        sheet.style.display = 'flex';
+        setTimeout(() => sheet.classList.add('active'), 10);
     }
 
     function showSettingsMenu() {
-        tg.showPopup({
-            title: 'Настройки трекера',
-            buttons: [
-                { id: 'goal', type: 'default', text: globalGoal ? 'Изменить цель' : 'Установить цель' },
-                { id: 'reset', type: 'destructive', text: 'Начать всё сначала' },
-                { type: 'cancel' }
-            ]
-        }, function(buttonId) {
-            if (buttonId === 'goal') showGoalForm();
-            if (buttonId === 'reset') resetAllData();
+        document.getElementById('sheetGoalBtn').textContent = globalGoal ? 'Изменить цель' : 'Установить цель';
+        const sheet = document.getElementById('settingsMenuSheet');
+        sheet.style.display = 'flex';
+        setTimeout(() => sheet.classList.add('active'), 10);
+    }
+
+    function closeSheets() {
+        document.querySelectorAll('.bottom-sheet').forEach(sheet => {
+            sheet.classList.remove('active');
+            setTimeout(() => sheet.style.display = 'none', 300);
         });
     }
 
@@ -335,12 +355,10 @@
     }
 
     function resetAllData() {
-        tg.showConfirm('Точно удалить все данные и начать сначала?', function(confirmed) {
-            if (confirmed) {
-                currentHabits = []; globalGoal = null; oneTimeSaves = [];
-                syncToCloud(); showAddForm();
-            }
-        });
+        if (confirm('Точно удалить все данные и начать сначала?')) {
+            currentHabits = []; globalGoal = null; oneTimeSaves = [];
+            syncToCloud(); showAddForm();
+        }
     }
 
     // --- ИНТЕРФЕЙС ---
@@ -348,7 +366,7 @@
 
     function renderDashboard() {
         if (currentHabits.length === 0 && oneTimeSaves.length === 0) {
-            showAddMenu(); // Если ничего нет, сразу предлагаем добавить
+            showAddMenu(); 
             return;
         }
         
@@ -447,9 +465,9 @@
     }
 
     function deleteHabit(index) {
-        tg.showConfirm('Точно удалить этот трекер?', function(confirmed) {
-            if (confirmed) { currentHabits.splice(index, 1); syncToCloud(); renderDashboard(); }
-        });
+        if (confirm('Точно удалить этот трекер?')) {
+            currentHabits.splice(index, 1); syncToCloud(); renderDashboard();
+        }
     }
 
     function showImpulseForm() { switchScreen('impulse-form'); }
@@ -465,9 +483,9 @@
     }
 
     function deleteImpulse(index) {
-        tg.showConfirm('Удалить эту запись?', function(confirmed) {
-            if (confirmed) { oneTimeSaves.splice(index, 1); syncToCloud(); renderDashboard(); }
-        });
+        if (confirm('Удалить эту запись?')) {
+            oneTimeSaves.splice(index, 1); syncToCloud(); renderDashboard();
+        }
     }
 
     function showGoalForm() {
@@ -487,7 +505,7 @@
 
     function setupLongPress(element, index) {
         let pressTimer = null, isLongPress = false;
-        const startPress = () => { isLongPress = false; pressTimer = setTimeout(() => { isLongPress = true; showHabitMenu(index); }, 500); };
+        const startPress = () => { isLongPress = false; pressTimer = setTimeout(() => { isLongPress = true; editHabit(index); }, 600); };
         const cancelPress = () => clearTimeout(pressTimer);
         element.addEventListener('mousedown', startPress); element.addEventListener('touchstart', startPress, {passive: true});
         ['mouseup','mouseleave','touchend','touchmove'].forEach(ev => element.addEventListener(ev, cancelPress));
