@@ -36,7 +36,6 @@
         .btn-primary { background-color: var(--btn-main) !important; color: var(--btn-text) !important; margin-top: 8px; }
         .btn-secondary { background-color: transparent !important; color: var(--text-hint) !important; border: 1px solid var(--border-color) !important; margin-top: 12px; }
 
-        /* Карточка баланса */
         .total-card { position: relative; background-color: var(--bg-card); border-radius: 20px; padding: 24px 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); text-align: center; }
         .settings-icon { position: absolute; top: 16px; right: 16px; color: var(--text-hint); cursor: pointer; padding: 8px; margin: -8px; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
         .settings-icon:active { color: var(--text-main); }
@@ -65,13 +64,14 @@
         .stat-label { font-size: 12px; font-weight: 500; margin-bottom: 6px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-value { font-size: 26px; font-weight: 700; line-height: 1.2; }
         
-        .habit-actions { display: flex; justify-content: space-around; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 4px; }
-        .habit-action-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text-hint); cursor: pointer; padding: 6px 12px; border-radius: 10px; transition: background 0.2s; }
+        .habit-actions { display: flex; justify-content: space-between; border-top: 1px solid var(--border-color); padding-top: 12px; margin-top: 4px; }
+        .habit-action-btn { display: flex; align-items: center; justify-content: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text-hint); cursor: pointer; padding: 6px 8px; border-radius: 10px; transition: background 0.2s; flex: 1; }
         .habit-action-btn:active { background: var(--bg-main); }
         .habit-action-btn.danger { color: var(--danger); }
         .habit-action-btn.danger:active { background: rgba(231, 76, 60, 0.1); }
+        .habit-action-btn.primary { color: #3498db; }
+        .habit-action-btn.primary:active { background: rgba(52, 152, 219, 0.1); }
 
-        /* Элементы списка (отказы и срывы) */
         .impulse-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-main); border-radius: 12px; }
         .impulse-info { display: flex; flex-direction: column; text-align: left; }
         .impulse-name { font-weight: 600; font-size: 15px; color: var(--text-main); }
@@ -89,14 +89,12 @@
         .expand-btn { text-align: center; font-size: 13px; color: var(--btn-main); padding: 10px 0 4px; font-weight: 600; cursor: pointer; opacity: 0.8; transition: opacity 0.2s; user-select: none; }
         .expand-btn:active { opacity: 1; }
 
-        /* Прогресс-бар */
         .progress-wrapper { margin-top: 20px; padding: 0 4px; text-align: left; }
         .progress-header { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-hint); margin-bottom: 8px; font-weight: 500; }
         .progress-track { background-color: var(--bg-main); border-radius: 8px; height: 12px; overflow: hidden; width: 100%; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
         .progress-fill { background-color: var(--btn-main); height: 100%; border-radius: 8px; transition: width 0.5s ease-out; }
         .progress-fill.completed { background-color: var(--success-text); }
 
-        /* СТАТИСТИКА */
         .stats-subtitle { font-size: 13px; font-weight: 600; color: var(--text-hint); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 28px; margin-bottom: 12px; text-align: left; }
         .stats-big-number { font-size: 32px; font-weight: 700; color: var(--text-main); text-align: left; line-height: 1.2; }
         .stats-big-number.positive { color: var(--success-text); }
@@ -122,7 +120,6 @@
         input:focus { border-color: var(--btn-main); }
         input::placeholder { color: var(--text-hint); opacity: 0.7; }
 
-        /* ВЫЕЗЖАЮЩИЕ МЕНЮ */
         .bottom-sheet { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.5); z-index: 2000; align-items: flex-end; opacity: 0; transition: opacity 0.3s ease; }
         .bottom-sheet.active { opacity: 1; }
         .sheet-content { background: var(--bg-card); width: 100%; border-radius: 24px 24px 0 0; padding: 24px 24px 40px; box-sizing: border-box; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.1); }
@@ -134,7 +131,6 @@
         .sheet-btn.danger { color: var(--danger); background: rgba(231, 76, 60, 0.1); }
         .sheet-cancel { background: transparent; color: var(--text-hint); margin-bottom: 0; }
 
-        /* Модальное окно календаря */
         .wheel-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1000; }
         .wheel-modal.active { display: block; }
         .wheel-card-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-card); border-radius: 24px; padding: 24px; width: 90%; max-width: 320px; text-align: center; box-sizing: border-box; }
@@ -187,7 +183,6 @@
         </div>
     </div>
 
-    <!-- Секция срывов -->
     <div id="relapsesContainer" style="margin-bottom: 16px; display: none;">
         <div class="habit-card collapsed" id="relapsesCard">
             <div class="habit-title-bar" onclick="toggleHabit(this)">
@@ -201,7 +196,6 @@
     <button class="action-btn btn-primary" onclick="showAddMenu()">+ Добавить</button>
 </div>
 
-<!-- Выезжающее меню периодов -->
 <div class="bottom-sheet" id="periodMenuSheet" onclick="closeSheets()">
     <div class="sheet-content" onclick="event.stopPropagation()">
         <div class="sheet-title">За какой период?</div>
@@ -233,7 +227,6 @@
     </div>
 </div>
 
-<!-- Формы -->
 <div id="add-form" class="screen">
     <div class="form-card">
         <h2 id="formTitle">Новая причина экономии</h2>
@@ -260,7 +253,6 @@
     </div>
 </div>
 
-<!-- Форма добавления срыва -->
 <div id="relapse-form" class="screen">
     <div class="form-card">
         <h2 id="relapseFormTitle">Срыв. На что соблазнились?</h2>
@@ -301,7 +293,6 @@
     </div>
 </div>
 
-<!-- Календарь -->
 <div class="wheel-modal" id="wheelModal">
     <div class="wheel-card-box">
         <div class="wheel-card-title">Выберите дату старта</div>
@@ -347,7 +338,7 @@
     
     let currentHabits = [];
     let oneTimeSaves = []; 
-    let relapses = []; // Массив для хранения срывов
+    let relapses = []; 
     let globalGoal = null; 
     let selectedDateValue = new Date().toISOString().split('T')[0];
 
@@ -359,7 +350,6 @@
         document.getElementById(screenId).classList.add('active');
     }
 
-    // --- УПРАВЛЕНИЕ МЕНЮ (Шторками) ---
     function showAddMenu() {
         const sheet = document.getElementById('addMenuSheet');
         sheet.style.display = 'flex';
@@ -392,7 +382,6 @@
         });
     }
 
-    // --- БАРАБАН ДАТЫ ---
     function initWheelPicker(dateStr) {
         const date = dateStr ? new Date(dateStr) : new Date();
         const d = date.getDate(), m = date.getMonth(), y = date.getFullYear();
@@ -437,7 +426,6 @@
         document.getElementById('wheelModal').classList.remove('active');
     }
 
-    // --- ДАННЫЕ ---
     function getUserId() { return tg.initDataUnsafe?.user?.id || 'test_user_pc'; }
 
     function loadApp() {
@@ -482,10 +470,33 @@
         }
     }
 
-    // --- ИНТЕРФЕЙС И ФИЛЬТРЫ ---
     function toggleHabit(element) { element.closest('.habit-card').classList.toggle('collapsed'); }
     function toggleAllImpulses(event) { if(event) event.stopPropagation(); showAllImpulses = !showAllImpulses; renderDashboard(); }
     function toggleAllRelapses(event) { if(event) event.stopPropagation(); showAllRelapses = !showAllRelapses; renderDashboard(); }
+
+    function resetHabitDays(index) {
+        const habit = currentHabits[index];
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        const startDate = new Date(habit.date);
+        startDate.setHours(0,0,0,0);
+        
+        let diffDays = Math.max(0, Math.floor((today - startDate) / (1000 * 60 * 60 * 24)));
+        let totalSaved = diffDays * parseFloat(habit.amount);
+
+        if (confirm(`Обнулить счетчик дней?\n\nУже накопленная сумма (${totalSaved} ₽) сохранится в "Разовых отказах" как несгораемый остаток, а дни начнутся с нуля.`)) {
+            if (totalSaved > 0) {
+                oneTimeSaves.push({ 
+                    name: `Сейф: ${habit.name}`, 
+                    amount: totalSaved, 
+                    date: new Date().toISOString() 
+                });
+            }
+            currentHabits[index].date = new Date().toISOString().split('T')[0];
+            syncToCloud();
+            renderDashboard();
+        }
+    }
 
     function renderDashboard() {
         if (currentHabits.length === 0 && oneTimeSaves.length === 0 && relapses.length === 0) {
@@ -511,7 +522,6 @@
         const today = new Date();
         today.setHours(0,0,0,0);
 
-        // 1. ПРИВЫЧКИ
         currentHabits.forEach((habit, index) => {
             const startDate = new Date(habit.date);
             startDate.setHours(0,0,0,0);
@@ -537,6 +547,10 @@
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
                                 Изменить
                             </div>
+                            <div class="habit-action-btn primary" onclick="resetHabitDays(${index})">
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                                Сбросить
+                            </div>
                             <div class="habit-action-btn danger" onclick="deleteHabit(${index})">
                                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                                 Удалить
@@ -546,7 +560,6 @@
                 </div>`;
         });
 
-        // 2. ОТКАЗЫ
         let filteredImpulses = [];
         oneTimeSaves.forEach((impulse, originalIndex) => {
             const impDate = new Date(impulse.date);
@@ -592,7 +605,6 @@
             }
         } else { impulsesContainer.style.display = 'none'; }
 
-        // 3. СРЫВЫ
         let filteredRelapses = [];
         relapses.forEach((relapse, originalIndex) => {
             const relDate = new Date(relapse.date);
@@ -638,8 +650,6 @@
             }
         } else { relapsesContainer.style.display = 'none'; }
 
-
-        // ОБЩИЙ ИТОГ
         const totalEl = document.getElementById('totalSavedAmount');
         totalEl.textContent = grandTotal.toLocaleString('ru-RU') + ' ₽';
         if(grandTotal < 0) {
@@ -662,7 +672,6 @@
         } else { globalProgressContainer.style.display = 'none'; }
     }
 
-    // --- СТАТИСТИКА И АНАЛИТИКА ---
     function formatCompact(num) {
         let absNum = Math.abs(num);
         if(absNum >= 1000000) return (num/1000000).toFixed(1).replace('.0','') + 'М';
@@ -730,7 +739,6 @@
             topContributorsMap['Разовые отказы'] = (topContributorsMap['Разовые отказы'] || 0) + totalImpulsesAmount;
         }
 
-        // Вычисление прогноза до 31 декабря текущего года
         const endOfYear = new Date(today.getFullYear(), 11, 31);
         const daysLeftInYear = Math.max(0, Math.ceil((endOfYear - today) / (1000 * 60 * 60 * 24)));
         const yearlyProjection = currentSavedTotal + (dailyRunRate * daysLeftInYear);
@@ -789,7 +797,6 @@
         }
     }
 
-    // --- ПРИВЫЧКИ ---
     function showAddForm() {
         switchScreen('add-form');
         if (editingIndex === null && !document.getElementById('startDateDisplay').value) {
@@ -826,7 +833,6 @@
         }
     }
 
-    // --- ОТКАЗЫ ---
     function showImpulseForm() { 
         editingImpulseIndex = null;
         document.getElementById('impulseName').value = ''; 
@@ -862,7 +868,6 @@
         }
     }
 
-    // --- СРЫВЫ ---
     function showRelapseForm() { 
         editingRelapseIndex = null;
         document.getElementById('relapseName').value = ''; 
@@ -898,7 +903,6 @@
         }
     }
 
-    // --- ЦЕЛИ ---
     function showGoalForm() {
         switchScreen('goal-form');
         document.getElementById('globalGoalInput').value = globalGoal || '';
