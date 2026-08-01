@@ -68,14 +68,13 @@
         input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; cursor: pointer; }
         input:focus { border-color: #3498db; }
 
-        /* Идеально отцентрированное модальное окно */
+        /* Идеальное центрирование модального окна по осям X и Y */
         .wheel-modal {
             display: none;
             position: fixed;
             inset: 0;
             width: 100vw;
             height: 100vh;
-            height: 100dvh;
             background: rgba(0, 0, 0, 0.45);
             z-index: 1000;
             justify-content: center;
@@ -104,7 +103,7 @@
         .wheels-container {
             display: flex;
             justify-content: space-between;
-            height: 140px;
+            height: 132px; /* Ровно 3 строки по 44px */
             position: relative;
             margin-bottom: 20px;
             overflow: hidden;
@@ -113,10 +112,10 @@
         }
         .wheel-indicator {
             position: absolute;
-            top: 50px;
+            top: 44px;
             left: 12px;
             right: 12px;
-            height: 40px;
+            height: 44px;
             border-top: 2px solid #3498db;
             border-bottom: 2px solid #3498db;
             pointer-events: none;
@@ -129,13 +128,13 @@
             scroll-snap-type: y mandatory;
             -ms-overflow-style: none;
             scrollbar-width: none;
-            padding: 50px 0;
+            padding: 44px 0;
             box-sizing: border-box;
             text-align: center;
         }
         .wheel-column::-webkit-scrollbar { display: none; }
         .wheel-item {
-            height: 40px;
+            height: 44px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -261,7 +260,7 @@
         const items = col.querySelectorAll('.wheel-item');
         for (let item of items) {
             if (parseInt(item.getAttribute('data-value')) === val) {
-                col.scrollTop = item.offsetTop - col.offsetTop - 50;
+                col.scrollTop = (item.offsetTop - col.offsetTop) - 44;
                 break;
             }
         }
@@ -280,7 +279,7 @@
         let minDiff = Infinity;
 
         items.forEach(item => {
-            const diff = Math.abs(item.offsetTop - col.offsetTop - 50 - scrollTop);
+            const diff = Math.abs((item.offsetTop - col.offsetTop) - 44 - scrollTop);
             if (diff < minDiff) {
                 minDiff = diff;
                 closestItem = item;
