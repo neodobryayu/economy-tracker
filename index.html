@@ -226,6 +226,7 @@
     <div class="sheet-content" onclick="event.stopPropagation()">
         <div class="sheet-title">Настройки трекера</div>
         <div class="sheet-btn" onclick="closeSheets(); showGoalForm();" id="sheetGoalBtn">Финансовая цель</div>
+        <div class="sheet-btn" onclick="closeSheets(); showSyncKeySettings();">Ключ синхронизации</div>
         <div class="sheet-btn danger" onclick="closeSheets(); resetAllData();">Начать всё сначала</div>
         <div class="sheet-btn sheet-cancel" onclick="closeSheets()">Отмена</div>
     </div>
@@ -345,6 +346,29 @@
     let relapses = []; 
     let globalGoal = null; 
 
+    // Функция генерации полностью приватного ID для браузера или привязка к Telegram
+    function getUserId() {
+        if (tg.initDataUnsafe && tg.initDataUnsafe.user && tg.initDataUnsafe.user.id) {
+            return 'tg_' + tg.initDataUnsafe.user.id;
+        }
+        let syncId = localStorage.getItem('tracker_sync_id');
+        if (!syncId) {
+            syncId = 'user_' + Math.random().toString(36).substring(2, 12) + Math.random().toString(36).substring(2, 12);
+            localStorage.setItem('tracker_sync_id', syncId);
+        }
+        return syncId;
+    }
+
+    // Управление ключом синхронизации через настройки
+    function showSyncKeySettings() {
+        let currentKey = getUserId();
+        let newKey = prompt("Ваш секретный ключ синхронизации:\n\nВведите его на другом устройстве, чтобы объединить данные.", currentKey);
+        if (newKey && newKey.trim() !== "" && newKey !== currentKey) {
+            localStorage.setItem('tracker_sync_id', newKey.trim());
+            location.reload();
+        }
+    }
+
     function getLocalDateString(d = new Date()) {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -441,8 +465,6 @@
         document.getElementById('startDateDisplay').value = `${validDay} ${monthsFullNames[month]} ${year}`;
         document.getElementById('wheelModal').classList.remove('active');
     }
-
-    function getUserId() { return tg.initDataUnsafe?.user?.id || 'test_user_pc'; }
 
     function loadApp() {
         const userId = getUserId();
@@ -945,7 +967,6 @@
 
     loadApp();
 
-    // Регистрация Service Worker для PWA
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js')
