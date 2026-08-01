@@ -41,6 +41,10 @@
         .settings-icon { position: absolute; top: 16px; right: 16px; color: var(--text-hint); cursor: pointer; padding: 8px; margin: -8px; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
         .settings-icon:active { color: var(--text-main); }
         
+        /* Иконка графиков (слева) */
+        .chart-icon { position: absolute; top: 16px; left: 16px; color: var(--text-hint); cursor: pointer; padding: 8px; margin: -8px; transition: color 0.2s; display: flex; align-items: center; justify-content: center; }
+        .chart-icon:active { color: var(--text-main); }
+
         .total-title { font-size: 14px; font-weight: 500; color: var(--text-hint); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         .total-amount { color: var(--text-main); font-size: 34px; font-weight: 700; line-height: 1.2; }
         
@@ -85,6 +89,22 @@
         .progress-fill { background-color: var(--btn-main); height: 100%; border-radius: 8px; transition: width 0.5s ease-out; }
         .progress-fill.completed { background-color: var(--success-text); }
 
+        /* --- СТАТИСТИКА И АНАЛИТИКА --- */
+        .stats-subtitle { font-size: 13px; font-weight: 600; color: var(--text-hint); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 28px; margin-bottom: 12px; text-align: left; }
+        .stats-big-number { font-size: 32px; font-weight: 700; color: var(--success-text); text-align: left; line-height: 1.2; }
+        
+        .chart-container { display: flex; align-items: flex-end; justify-content: space-between; height: 160px; padding-top: 16px; gap: 6px; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; }
+        .chart-bar-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; flex: 1; height: 100%; gap: 6px; }
+        .chart-bar { width: 100%; background-color: var(--btn-main); border-radius: 6px 6px 0 0; min-height: 4px; transition: height 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.1); }
+        .chart-label { font-size: 11px; color: var(--text-hint); font-weight: 500; text-transform: capitalize; }
+        .chart-value { font-size: 11px; color: var(--text-main); font-weight: 600; margin-bottom: 2px; }
+
+        .top-list { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+        .top-item { display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: var(--bg-main); border-radius: 14px; }
+        .top-item-name { font-weight: 600; font-size: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px; }
+        .top-item-index { font-size: 13px; font-weight: 700; color: var(--text-hint); opacity: 0.6; width: 16px; }
+        .top-item-amount { font-weight: 700; color: var(--text-main); font-size: 15px; }
+
         .form-card { background-color: var(--bg-card); border-radius: 20px; padding: 24px; text-align: center; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); }
         .form-card h2 { margin-top: 0; color: var(--text-main); font-size: 20px; margin-bottom: 24px; }
         .label { font-size: 14px; color: var(--text-hint); font-weight: 500; text-align: left; margin-bottom: 6px; }
@@ -126,6 +146,16 @@
 
 <div id="dashboard" class="screen active">
     <div class="total-card" id="totalCardContainer" style="display: none;">
+        
+        <!-- Иконка Аналитики (График) -->
+        <div class="chart-icon" onclick="showStats()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="18" y="3" width="4" height="18"></rect>
+                <rect x="10" y="8" width="4" height="13"></rect>
+                <rect x="2" y="13" width="4" height="8"></rect>
+            </svg>
+        </div>
+
         <!-- Иконка настроек -->
         <div class="settings-icon" onclick="showSettingsMenu()">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -210,6 +240,31 @@
         <button class="action-btn btn-primary" onclick="saveGoal()">Сохранить цель</button>
         <button class="action-btn" style="background-color: transparent; color: var(--danger); margin-top: 12px; display: none;" onclick="deleteGoal()" id="deleteGoalBtn">Удалить цель</button>
         <button class="action-btn btn-secondary" onclick="showDashboard()">Назад</button>
+    </div>
+</div>
+
+<!-- Экран статистики и аналитики -->
+<div id="stats-form" class="screen">
+    <div class="form-card" style="padding-bottom: 30px;">
+        <h2>Аналитика</h2>
+        
+        <!-- Прогноз на год -->
+        <div class="stats-subtitle" style="margin-top: 0;">Прогноз за 1 год</div>
+        <div class="stats-big-number" id="statsProjection">0 ₽</div>
+        
+        <!-- График по месяцам -->
+        <div class="stats-subtitle">По месяцам</div>
+        <div class="chart-container" id="statsChart">
+            <!-- Столбики генерируются через JS -->
+        </div>
+
+        <!-- Топ причин -->
+        <div class="stats-subtitle">Топ причин</div>
+        <div class="top-list" id="statsTopList">
+            <!-- Топ генерируется через JS -->
+        </div>
+
+        <button class="action-btn btn-secondary" style="margin-top: 32px;" onclick="showDashboard()">Назад</button>
     </div>
 </div>
 
@@ -392,7 +447,7 @@
             grandTotal += totalSaved;
 
             habitsListEl.innerHTML += `
-                <div class="habit-card" id="habit-card-${index}">
+                <div class="habit-card collapsed" id="habit-card-${index}">
                     <div class="habit-title-bar" onclick="toggleHabit(this)">
                         <span>${habit.name}</span>
                         <span class="arrow-icon">▼</span>
@@ -445,6 +500,120 @@
                     <div class="progress-track"><div class="progress-fill ${percent >= 100 ? 'completed' : ''}" style="width: ${Math.min(percent, 100)}%"></div></div>
                 </div>`;
         } else { globalProgressContainer.style.display = 'none'; }
+    }
+
+    // --- СТАТИСТИКА И АНАЛИТИКА ---
+    function formatCompact(num) {
+        if(num >= 1000000) return (num/1000000).toFixed(1).replace('.0','') + 'М';
+        if(num >= 1000) return (num/1000).toFixed(1).replace('.0','') + 'к';
+        return num.toString();
+    }
+
+    function showStats() {
+        switchScreen('stats-form');
+        
+        let dailyRunRate = 0;
+        let monthlyData = {};
+        let topContributorsMap = {};
+        let totalImpulsesAmount = 0;
+
+        const today = new Date();
+        today.setHours(0,0,0,0);
+
+        // 1. Анализируем постоянные привычки
+        currentHabits.forEach(habit => {
+            const amt = parseFloat(habit.amount);
+            dailyRunRate += amt;
+            
+            const startDate = new Date(habit.date);
+            startDate.setHours(0,0,0,0);
+            
+            let diffDays = Math.max(0, Math.floor((today - startDate) / (1000 * 60 * 60 * 24)));
+            let totalSaved = diffDays * amt;
+            
+            if(totalSaved > 0) {
+                topContributorsMap[habit.name] = (topContributorsMap[habit.name] || 0) + totalSaved;
+            }
+
+            // Размазываем по месяцам для графика
+            let currDate = new Date(startDate);
+            while(currDate < today) {
+                const mKey = currDate.getFullYear() + '-' + String(currDate.getMonth()).padStart(2, '0');
+                monthlyData[mKey] = (monthlyData[mKey] || 0) + amt;
+                currDate.setDate(currDate.getDate() + 1);
+            }
+        });
+
+        // 2. Анализируем разовые отказы
+        oneTimeSaves.forEach(impulse => {
+            const amt = parseFloat(impulse.amount);
+            totalImpulsesAmount += amt;
+            
+            const d = new Date(impulse.date);
+            const mKey = d.getFullYear() + '-' + String(d.getMonth()).padStart(2, '0');
+            monthlyData[mKey] = (monthlyData[mKey] || 0) + amt;
+        });
+
+        if(totalImpulsesAmount > 0) {
+            topContributorsMap['Разовые отказы'] = (topContributorsMap['Разовые отказы'] || 0) + totalImpulsesAmount;
+        }
+
+        // 3. Вывод годового прогноза
+        const yearlyProjection = (dailyRunRate * 365) + totalImpulsesAmount;
+        document.getElementById('statsProjection').textContent = yearlyProjection > 0 ? `~ ${yearlyProjection.toLocaleString('ru-RU')} ₽` : '0 ₽';
+
+        // 4. Построение графика (за последние 6 месяцев)
+        const chartMonths = [];
+        const iterDate = new Date();
+        for(let i=5; i>=0; i--) {
+            const tempD = new Date(iterDate.getFullYear(), iterDate.getMonth() - i, 1);
+            const k = tempD.getFullYear() + '-' + String(tempD.getMonth()).padStart(2, '0');
+            chartMonths.push({
+                label: monthsNames[tempD.getMonth()],
+                val: monthlyData[k] || 0,
+                isCurrent: i === 0
+            });
+        }
+
+        const maxVal = Math.max(...chartMonths.map(m => m.val), 1);
+        const chartHtml = chartMonths.map(m => {
+            const height = (m.val / maxVal) * 100;
+            const formattedVal = m.val > 0 ? formatCompact(m.val) : '';
+            const opacity = m.isCurrent ? '1' : '0.5';
+            return `
+                <div class="chart-bar-wrapper">
+                    <div class="chart-value">${formattedVal}</div>
+                    <div class="chart-bar" style="height: ${height}%; opacity: ${opacity};"></div>
+                    <div class="chart-label" style="font-weight: ${m.isCurrent ? '700' : '500'}; color: ${m.isCurrent ? 'var(--text-main)' : 'var(--text-hint)'}">${m.label}</div>
+                </div>
+            `;
+        }).join('');
+        
+        // Обертка в setTimeout для красивой анимации выезда столбиков
+        document.getElementById('statsChart').innerHTML = chartHtml.replace(/height: ([0-9.]+)%/g, 'height: 0%');
+        setTimeout(() => {
+            document.getElementById('statsChart').innerHTML = chartHtml;
+        }, 50);
+
+        // 5. Вывод Топ-5 причин
+        const topArr = Object.keys(topContributorsMap).map(name => {
+            return { name: name, amount: topContributorsMap[name] };
+        }).sort((a,b) => b.amount - a.amount).slice(0, 5);
+
+        if(topArr.length > 0) {
+            document.getElementById('statsTopList').innerHTML = topArr.map((item, idx) => `
+                <div class="top-item">
+                    <div class="top-item-name">
+                        <span class="top-item-index">${idx + 1}</span>
+                        ${item.name}
+                    </div>
+                    <div class="top-item-amount">${item.amount.toLocaleString('ru-RU')} ₽</div>
+                </div>
+            `).join('');
+            document.getElementById('statsTopList').style.display = 'flex';
+        } else {
+            document.getElementById('statsTopList').innerHTML = '<div style="color: var(--text-hint); font-size: 14px; text-align: center; padding: 20px;">Пока нет данных</div>';
+        }
     }
 
     function showAddForm() {
