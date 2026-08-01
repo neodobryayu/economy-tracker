@@ -68,13 +68,14 @@
         input { width: 100%; box-sizing: border-box; padding: 14px; margin-bottom: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background-color: #f8f9fa; font-size: 16px; color: #2c3e50; outline: none; transition: border-color 0.2s; cursor: pointer; }
         input:focus { border-color: #3498db; }
 
-        /* Идеальное центрирование модального окна по осям X и Y */
+        /* Абсолютное центрирование модального окна по X и Y */
         .wheel-modal {
             display: none;
             position: fixed;
             inset: 0;
             width: 100vw;
             height: 100vh;
+            height: 100dvh;
             background: rgba(0, 0, 0, 0.45);
             z-index: 1000;
             justify-content: center;
@@ -128,7 +129,7 @@
             scroll-snap-type: y mandatory;
             -ms-overflow-style: none;
             scrollbar-width: none;
-            padding: 44px 0;
+            padding: 44px 0; /* Ровно 1 элемент сверху и снизу для идеального центрирования */
             box-sizing: border-box;
             text-align: center;
         }
@@ -145,6 +146,7 @@
             cursor: pointer;
             transition: all 0.15s ease;
             width: 100%;
+            box-sizing: border-box;
         }
         .wheel-item.active {
             color: #2c3e50;
