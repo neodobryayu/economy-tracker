@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Трекер отказа</title>
+    <!-- Подключение манифеста PWA и цвета темы для Android -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#2c3e50">
+
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
@@ -341,7 +345,6 @@
     let relapses = []; 
     let globalGoal = null; 
 
-    // Вспомогательная функция для генерации локальной даты (Y-M-D) без смещения UTC
     function getLocalDateString(d = new Date()) {
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, '0');
@@ -855,7 +858,7 @@
         editingImpulseIndex = null;
         document.getElementById('impulseName').value = ''; 
         document.getElementById('impulseAmount').value = '';
-        document.getElementById('impulseFormTitle').textContent = 'Так держать! Что не купили?';
+        document.getElementById('impulseFormTitle').textContent = 'Так держать! От чего воздержались?';
         switchScreen('impulse-form'); 
     }
     function editImpulse(index) {
@@ -941,6 +944,15 @@
     }
 
     loadApp();
+
+    // Регистрация Service Worker для PWA
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(reg => console.log('Service Worker зарегистрирован!', reg))
+                .catch(err => console.log('Ошибка регистрации SW:', err));
+        });
+    }
 </script>
 </body>
 </html>
