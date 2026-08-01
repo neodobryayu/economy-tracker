@@ -144,12 +144,15 @@
         }).catch(err => console.log('Ошибка синхронизации с облаком'));
     }
 
-    // Полный сброс всех данных
+    // Полный сброс всех данных с мгновенным переходом к форме
     function resetAllData() {
         tg.showConfirm('Точно удалить все трекеры и начать сначала?', function(confirmed) {
             if (confirmed) {
                 syncToCloud([]);
-                loadApp();
+                currentHabits = [];
+                showAddForm();
+                const cancelBtn = document.querySelector('#add-form button:last-child');
+                if(cancelBtn) cancelBtn.style.display = 'none';
             }
         });
     }
