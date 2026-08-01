@@ -6,7 +6,6 @@
     <title>Трекер отказа</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        /* Подключаем системные цвета Telegram с красивыми светлыми фоллбеками на случай открытия вне мессенджера */
         :root {
             --bg-main: var(--tg-theme-secondary-bg-color, #f4f6f8);
             --bg-card: var(--tg-theme-bg-color, #ffffff);
@@ -45,16 +44,8 @@
         }
         .action-btn:active { transform: scale(0.98); }
         
-        .btn-primary { 
-            background-color: var(--btn-main) !important; 
-            color: var(--btn-text) !important; 
-        }
-        .btn-secondary { 
-            background-color: transparent !important; 
-            color: var(--text-hint) !important; 
-            border: 1px solid var(--border-color) !important; 
-            margin-top: 12px; 
-        }
+        .btn-primary { background-color: var(--btn-main) !important; color: var(--btn-text) !important; }
+        .btn-secondary { background-color: transparent !important; color: var(--text-hint) !important; border: 1px solid var(--border-color) !important; margin-top: 12px; }
 
         .total-card { background-color: var(--bg-card); border-radius: 20px; padding: 24px 20px; margin-bottom: 16px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.04); text-align: center; }
         .total-title { font-size: 14px; font-weight: 500; color: var(--text-hint); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -66,8 +57,8 @@
         .habit-title-bar:active { filter: brightness(0.95); }
         
         .arrow-icon { font-size: 12px; color: var(--text-hint); transition: transform 0.3s ease; }
-        .habit-content { max-height: 300px; overflow: hidden; transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease; opacity: 1; display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
-        .habit-card.collapsed .habit-content { max-height: 0; opacity: 0; margin-top: 0; }
+        .habit-content { max-height: 500px; overflow-y: auto; transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease; opacity: 1; display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+        .habit-card.collapsed .habit-content { max-height: 0; opacity: 0; margin-top: 0; overflow: hidden; }
         .habit-card.collapsed .arrow-icon { transform: rotate(-90deg); }
         
         .habit-stats-row { display: flex; gap: 12px; }
@@ -77,7 +68,17 @@
         .stat-label { font-size: 12px; font-weight: 500; margin-bottom: 6px; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
         .stat-value { font-size: 26px; font-weight: 700; line-height: 1.2; }
         
-        /* Стили для глобального прогресс-бара */
+        /* Стили для разовых отказов (импульсивных покупок) */
+        .impulse-item { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: var(--bg-main); border-radius: 12px; }
+        .impulse-info { display: flex; flex-direction: column; text-align: left; }
+        .impulse-name { font-weight: 600; font-size: 15px; color: var(--text-main); }
+        .impulse-date { font-size: 12px; color: var(--text-hint); margin-top: 4px; }
+        .impulse-right { display: flex; align-items: center; gap: 12px; }
+        .impulse-amount { font-weight: 700; color: var(--success-text); font-size: 16px; }
+        .impulse-delete { color: var(--text-hint); font-size: 14px; padding: 4px; cursor: pointer; opacity: 0.5; }
+        .impulse-delete:active { opacity: 1; }
+
+        /* Прогресс-бар */
         .progress-wrapper { margin-top: 20px; padding: 0 4px; text-align: left; }
         .progress-header { display: flex; justify-content: space-between; font-size: 13px; color: var(--text-hint); margin-bottom: 8px; font-weight: 500; }
         .progress-track { background-color: var(--bg-main); border-radius: 8px; height: 12px; overflow: hidden; width: 100%; box-shadow: inset 0 1px 2px rgba(0,0,0,0.05); }
@@ -92,113 +93,62 @@
         input:focus { border-color: var(--btn-main); }
         input::placeholder { color: var(--text-hint); opacity: 0.7; }
 
-        /* Модальное окно и барабан */
-        .wheel-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 1000;
-        }
-        .wheel-modal.active { display: block; }
-        .wheel-card-box {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--bg-card);
-            border-radius: 24px;
-            padding: 24px;
-            width: 90%;
-            max-width: 320px;
-            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
-            text-align: center;
-            box-sizing: border-box;
-        }
-        .wheel-card-title { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 16px; }
-        
-        .wheels-container {
-            display: flex;
-            justify-content: space-between;
-            height: 132px; 
-            position: relative;
-            margin-bottom: 20px;
-            overflow: hidden;
-            background: var(--bg-main);
-            border-radius: 16px;
-        }
-        .wheel-indicator {
-            position: absolute;
-            top: 44px;
-            left: 12px;
-            right: 12px;
-            height: 44px;
-            border-top: 2px solid var(--btn-main);
-            border-bottom: 2px solid var(--btn-main);
-            pointer-events: none;
-            z-index: 2;
-            box-sizing: border-box;
-        }
-        .wheel-column {
-            flex: 1;
-            height: 100%;
-            overflow-y: scroll;
-            scroll-snap-type: y mandatory;
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-            box-sizing: border-box;
-            text-align: center;
-            position: relative;
-        }
-        .wheel-column::-webkit-scrollbar { display: none; }
-        
-        .wheel-spacer { height: 44px; min-height: 44px; width: 100%; }
-        .wheel-item {
-            height: 44px;
-            line-height: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 17px;
-            font-weight: 500;
-            color: var(--text-hint);
-            scroll-snap-align: center;
-            cursor: pointer;
-            transition: all 0.15s ease;
-            width: 100%;
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-        .wheel-item.active {
-            color: var(--text-main);
-            font-weight: 700;
-            font-size: 19px;
-        }
+        /* Сетка для кнопок главного экрана */
+        .btn-grid { display: flex; gap: 12px; margin-top: 8px; }
+        .btn-grid .action-btn { margin-top: 0; flex: 1; padding: 14px 10px; font-size: 15px; }
 
-        #dashboard, #add-form, #goal-form { display: none; }
-        .active { display: block !important; }
+        /* Модальное окно и барабан */
+        .wheel-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.6); z-index: 1000; }
+        .wheel-modal.active { display: block; }
+        .wheel-card-box { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-card); border-radius: 24px; padding: 24px; width: 90%; max-width: 320px; text-align: center; box-sizing: border-box; }
+        .wheel-card-title { font-size: 18px; font-weight: 700; color: var(--text-main); margin-bottom: 16px; }
+        .wheels-container { display: flex; justify-content: space-between; height: 132px; position: relative; margin-bottom: 20px; overflow: hidden; background: var(--bg-main); border-radius: 16px; }
+        .wheel-indicator { position: absolute; top: 44px; left: 12px; right: 12px; height: 44px; border-top: 2px solid var(--btn-main); border-bottom: 2px solid var(--btn-main); pointer-events: none; z-index: 2; box-sizing: border-box; }
+        .wheel-column { flex: 1; height: 100%; overflow-y: scroll; scroll-snap-type: y mandatory; -ms-overflow-style: none; scrollbar-width: none; box-sizing: border-box; text-align: center; position: relative; }
+        .wheel-column::-webkit-scrollbar { display: none; }
+        .wheel-spacer { height: 44px; min-height: 44px; width: 100%; }
+        .wheel-item { height: 44px; line-height: 44px; display: flex; align-items: center; justify-content: center; font-size: 17px; font-weight: 500; color: var(--text-hint); scroll-snap-align: center; cursor: pointer; transition: all 0.15s ease; width: 100%; box-sizing: border-box; margin: 0; padding: 0; }
+        .wheel-item.active { color: var(--text-main); font-weight: 700; font-size: 19px; }
+
+        .screen { display: none; }
+        .screen.active { display: block !important; }
     </style>
 </head>
 <body>
 
-<div id="dashboard">
+<div id="dashboard" class="screen active">
     <div class="total-card" id="totalCardContainer" style="display: none;">
         <div class="total-title">Общая экономия</div>
         <div class="total-amount" id="totalSavedAmount">0 ₽</div>
-        
         <div id="globalProgressContainer" style="display: none;"></div>
     </div>
     
     <div id="habitsList" style="margin-bottom: 16px;"></div>
     
-    <button class="action-btn btn-primary" onclick="showAddForm()">Добавить трекер</button>
+    <!-- Карточка разовых отказов (появляется только если есть записи) -->
+    <div id="impulsesContainer" style="margin-bottom: 16px; display: none;">
+        <div class="habit-card collapsed" id="impulsesCard">
+            <div class="habit-title-bar" onclick="toggleHabit(this)">
+                <span>Разовые отказы</span>
+                <span class="arrow-icon">▼</span>
+            </div>
+            <div class="habit-content" id="impulsesList">
+                <!-- Здесь будут записи -->
+            </div>
+        </div>
+    </div>
+    
+    <div class="btn-grid">
+        <button class="action-btn btn-primary" onclick="showAddForm()">+ Привычка</button>
+        <button class="action-btn" style="background-color: var(--bg-card); color: var(--btn-main); border: 1px solid var(--border-color);" onclick="showImpulseForm()">+ Не купил</button>
+    </div>
+    
     <button class="action-btn" style="background-color: var(--bg-main); color: var(--text-main); margin-top: 12px;" onclick="showGoalForm()" id="goalBtn">Добавить цель</button>
     <button class="action-btn btn-secondary" style="color: var(--danger) !important; border-color: var(--danger) !important;" onclick="resetAllData()">Начать все сначала</button>
 </div>
 
-<!-- Экран добавления/редактирования привычки -->
-<div id="add-form">
+<!-- Экран добавления привычки -->
+<div id="add-form" class="screen">
     <div class="form-card">
         <h2 id="formTitle">Новая причина экономии</h2>
         <div class="label">Название:</div>
@@ -212,8 +162,21 @@
     </div>
 </div>
 
-<!-- Экран установки глобальной финансовой цели -->
-<div id="goal-form">
+<!-- Экран добавления разовой покупки (Соблазна) -->
+<div id="impulse-form" class="screen">
+    <div class="form-card">
+        <h2>Молодец! Что не купили?</h2>
+        <div class="label">Название:</div>
+        <input type="text" id="impulseName" placeholder="Например: Пицца">
+        <div class="label">Сохраненная сумма (₽):</div>
+        <input type="number" id="impulseAmount" placeholder="Например: 1000">
+        <button class="action-btn btn-primary" onclick="saveImpulse()">Добавить в копилку</button>
+        <button class="action-btn btn-secondary" onclick="showDashboard()">Назад</button>
+    </div>
+</div>
+
+<!-- Экран установки цели -->
+<div id="goal-form" class="screen">
     <div class="form-card">
         <h2>Финансовая цель</h2>
         <div class="label">Сколько хотим накопить? (₽):</div>
@@ -224,7 +187,7 @@
     </div>
 </div>
 
-<!-- Модальное окно кастомного прокруточного выбора даты -->
+<!-- Модальное окно календаря -->
 <div class="wheel-modal" id="wheelModal">
     <div class="wheel-card-box">
         <div class="wheel-card-title">Выберите дату старта</div>
@@ -243,7 +206,6 @@
     tg.expand();
     tg.ready();
     
-    // Подкрашиваем системную шапку самого Telegram под цвет приложения
     try {
         if(tg.setHeaderColor) tg.setHeaderColor('bg_color');
         if(tg.setBackgroundColor) tg.setBackgroundColor('secondary_bg_color');
@@ -251,11 +213,10 @@
 
     const FIREBASE_URL = 'https://economy-tracker-f8842-default-rtdb.firebaseio.com/'; 
 
-    const dashboard = document.getElementById('dashboard');
-    const addForm = document.getElementById('add-form');
-    const goalForm = document.getElementById('goal-form');
-    
+    const screens = document.querySelectorAll('.screen');
     const habitsListEl = document.getElementById('habitsList');
+    const impulsesContainer = document.getElementById('impulsesContainer');
+    const impulsesListEl = document.getElementById('impulsesList');
     const totalCardContainer = document.getElementById('totalCardContainer');
     const totalSavedAmountEl = document.getElementById('totalSavedAmount');
     const globalProgressContainer = document.getElementById('globalProgressContainer');
@@ -263,326 +224,147 @@
 
     let editingIndex = null;
     let currentHabits = [];
+    let oneTimeSaves = []; // Массив для разовых отказов
     let globalGoal = null; 
     let selectedDateValue = new Date().toISOString().split('T')[0];
 
     const monthsNames = ['янв', 'фев', 'мар', 'апр', 'май', 'июн', 'июл', 'авг', 'сен', 'окт', 'ноя', 'дек'];
     const monthsFullNames = ['января', 'февраля', 'марта', 'апреля', 'мая', 'июня', 'июля', 'августа', 'сентября', 'октября', 'ноября', 'декабря'];
 
+    function switchScreen(screenId) {
+        screens.forEach(s => s.classList.remove('active'));
+        document.getElementById(screenId).classList.add('active');
+    }
+
+    // --- БАРАБАН ДАТЫ (Без изменений) ---
     function initWheelPicker(dateStr) {
         const date = dateStr ? new Date(dateStr) : new Date();
-        const d = date.getDate();
-        const m = date.getMonth();
-        const y = date.getFullYear();
-
-        const colDay = document.getElementById('colDay');
-        const colMonth = document.getElementById('colMonth');
-        const colYear = document.getElementById('colYear');
+        const d = date.getDate(), m = date.getMonth(), y = date.getFullYear();
+        const colDay = document.getElementById('colDay'), colMonth = document.getElementById('colMonth'), colYear = document.getElementById('colYear');
 
         let dayHtml = '<div class="wheel-spacer"></div>';
-        for (let i = 1; i <= 31; i++) {
-            dayHtml += `<div class="wheel-item" data-value="${i}">${i < 10 ? '0' + i : i}</div>`;
-        }
-        dayHtml += '<div class="wheel-spacer"></div>';
-        colDay.innerHTML = dayHtml;
+        for (let i = 1; i <= 31; i++) dayHtml += `<div class="wheel-item" data-value="${i}">${i < 10 ? '0' + i : i}</div>`;
+        colDay.innerHTML = dayHtml + '<div class="wheel-spacer"></div>';
 
         let monthHtml = '<div class="wheel-spacer"></div>';
-        monthsNames.forEach((mon, index) => {
-            monthHtml += `<div class="wheel-item" data-value="${index}">${mon}</div>`;
-        });
-        monthHtml += '<div class="wheel-spacer"></div>';
-        colMonth.innerHTML = monthHtml;
+        monthsNames.forEach((mon, index) => monthHtml += `<div class="wheel-item" data-value="${index}">${mon}</div>`);
+        colMonth.innerHTML = monthHtml + '<div class="wheel-spacer"></div>';
 
         let yearHtml = '<div class="wheel-spacer"></div>';
         const currentYear = new Date().getFullYear();
-        for (let yr = 2020; yr <= currentYear; yr++) {
-            yearHtml += `<div class="wheel-item" data-value="${yr}">${yr}</div>`;
-        }
-        yearHtml += '<div class="wheel-spacer"></div>';
-        colYear.innerHTML = yearHtml;
+        for (let yr = 2020; yr <= currentYear; yr++) yearHtml += `<div class="wheel-item" data-value="${yr}">${yr}</div>`;
+        colYear.innerHTML = yearHtml + '<div class="wheel-spacer"></div>';
 
-        setTimeout(() => {
-            scrollToValue('colDay', d);
-            scrollToValue('colMonth', m);
-            scrollToValue('colYear', y);
-            updateWheelActive('day');
-            updateWheelActive('month');
-            updateWheelActive('year');
-        }, 50);
+        setTimeout(() => { scrollToValue('colDay', d); scrollToValue('colMonth', m); scrollToValue('colYear', y); updateWheelActive('day'); updateWheelActive('month'); updateWheelActive('year'); }, 50);
     }
-
     function scrollToValue(colId, val) {
-        const col = document.getElementById(colId);
-        const items = col.querySelectorAll('.wheel-item');
-        for (let item of items) {
-            if (parseInt(item.getAttribute('data-value')) === val) {
-                col.scrollTop = item.offsetTop - 44;
-                break;
-            }
-        }
+        const col = document.getElementById(colId), items = col.querySelectorAll('.wheel-item');
+        for (let item of items) { if (parseInt(item.getAttribute('data-value')) === val) { col.scrollTop = item.offsetTop - 44; break; } }
     }
-
-    function onWheelScroll(type) {
-        updateWheelActive(type);
-    }
-
+    function onWheelScroll(type) { updateWheelActive(type); }
     function updateWheelActive(type) {
         const col = document.getElementById(type === 'day' ? 'colDay' : type === 'month' ? 'colMonth' : 'colYear');
-        const items = col.querySelectorAll('.wheel-item');
-        const scrollTop = col.scrollTop;
-        
-        let closestItem = null;
-        let minDiff = Infinity;
-
-        items.forEach(item => {
-            const currentY = item.offsetTop - scrollTop;
-            const diff = Math.abs(currentY - 44);
-            if (diff < minDiff) {
-                minDiff = diff;
-                closestItem = item;
-            }
-        });
-
+        const items = col.querySelectorAll('.wheel-item'), scrollTop = col.scrollTop;
+        let closestItem = null, minDiff = Infinity;
+        items.forEach(item => { const diff = Math.abs((item.offsetTop - scrollTop) - 44); if (diff < minDiff) { minDiff = diff; closestItem = item; } });
         items.forEach(item => item.classList.remove('active'));
-        if (closestItem) {
-            closestItem.classList.add('active');
-        }
+        if (closestItem) closestItem.classList.add('active');
     }
-
-    function openWheelPicker() {
-        initWheelPicker(selectedDateValue);
-        document.getElementById('wheelModal').classList.add('active');
-    }
-
+    function openWheelPicker() { initWheelPicker(selectedDateValue); document.getElementById('wheelModal').classList.add('active'); }
     function confirmWheelDate() {
-        const getActiveVal = (colId) => {
-            const col = document.getElementById(colId);
-            const active = col.querySelector('.wheel-item.active');
-            return active ? parseInt(active.getAttribute('data-value')) : null;
-        };
-
-        const day = getActiveVal('colDay') || 1;
-        const month = getActiveVal('colMonth') || 0;
-        const year = getActiveVal('colYear') || new Date().getFullYear();
-
-        const maxDaysInMonth = new Date(year, month + 1, 0).getDate();
-        const validDay = Math.min(day, maxDaysInMonth);
-
-        const dateObj = new Date(year, month, validDay);
-        if (dateObj > new Date()) {
-            tg.showAlert('Нельзя выбрать дату из будущего!');
-            return;
-        }
-
+        const getActiveVal = (colId) => { const active = document.getElementById(colId).querySelector('.wheel-item.active'); return active ? parseInt(active.getAttribute('data-value')) : null; };
+        const day = getActiveVal('colDay') || 1, month = getActiveVal('colMonth') || 0, year = getActiveVal('colYear') || new Date().getFullYear();
+        const validDay = Math.min(day, new Date(year, month + 1, 0).getDate());
+        if (new Date(year, month, validDay) > new Date()) { tg.showAlert('Нельзя выбрать дату из будущего!'); return; }
         selectedDateValue = `${year}-${String(month + 1).padStart(2, '0')}-${String(validDay).padStart(2, '0')}`;
         document.getElementById('startDateDisplay').value = `${validDay} ${monthsFullNames[month]} ${year}`;
         document.getElementById('wheelModal').classList.remove('active');
     }
 
-    function getUserId() {
-        return tg.initDataUnsafe?.user?.id || 'test_user_pc';
-    }
+    // --- ДАННЫЕ И СИНХРОНИЗАЦИЯ ---
+    function getUserId() { return tg.initDataUnsafe?.user?.id || 'test_user_pc'; }
 
     function loadApp() {
         const userId = getUserId();
         
         if (FIREBASE_URL.includes('ВАША_ССЫЛКА')) {
-            const localData = JSON.parse(localStorage.getItem('userData'));
-            if (localData && typeof localData === 'object' && !Array.isArray(localData)) {
-                currentHabits = localData.habits || [];
-                globalGoal = localData.globalGoal || null;
-            } else {
-                currentHabits = JSON.parse(localStorage.getItem('userHabits')) || [];
-            }
-            handleHabitsLoaded();
+            parseLocalData(JSON.parse(localStorage.getItem('userData')));
             return;
         }
 
         fetch(`${FIREBASE_URL}/${userId}.json`)
             .then(res => res.json())
             .then(data => {
-                if (Array.isArray(data)) {
-                    currentHabits = data;
-                    globalGoal = null;
-                } else if (data && typeof data === 'object') {
+                if (Array.isArray(data)) { currentHabits = data; globalGoal = null; oneTimeSaves = []; } 
+                else if (data && typeof data === 'object') {
                     currentHabits = data.habits || [];
                     globalGoal = data.globalGoal || null;
-                } else {
-                    currentHabits = [];
-                    globalGoal = null;
-                }
+                    oneTimeSaves = data.oneTimeSaves || [];
+                } else { currentHabits = []; globalGoal = null; oneTimeSaves = []; }
                 
-                localStorage.setItem('userData', JSON.stringify({ habits: currentHabits, globalGoal: globalGoal }));
-                handleHabitsLoaded();
+                syncToCloud(true); // Сохраняем локально сразу
+                renderDashboard();
             })
-            .catch(err => {
-                console.log('Ошибка загрузки из облака, берем локальные', err);
-                const localData = JSON.parse(localStorage.getItem('userData'));
-                if (localData && typeof localData === 'object' && !Array.isArray(localData)) {
-                    currentHabits = localData.habits || [];
-                    globalGoal = localData.globalGoal || null;
-                } else {
-                    currentHabits = JSON.parse(localStorage.getItem('userHabits')) || [];
-                }
-                handleHabitsLoaded();
-            });
+            .catch(err => parseLocalData(JSON.parse(localStorage.getItem('userData'))));
     }
 
-    function handleHabitsLoaded() {
-        if (currentHabits && currentHabits.length > 0) {
-            renderHabits(currentHabits);
-            showDashboard();
+    function parseLocalData(localData) {
+        if (localData && typeof localData === 'object' && !Array.isArray(localData)) {
+            currentHabits = localData.habits || [];
+            globalGoal = localData.globalGoal || null;
+            oneTimeSaves = localData.oneTimeSaves || [];
         } else {
-            showAddForm();
-            const cancelBtn = document.querySelector('#add-form button:last-child');
-            if(cancelBtn) cancelBtn.style.display = 'none';
+            currentHabits = JSON.parse(localStorage.getItem('userHabits')) || [];
         }
+        renderDashboard();
     }
 
-    function syncToCloud() {
-        const payload = { habits: currentHabits, globalGoal: globalGoal };
+    function syncToCloud(onlyLocal = false) {
+        const payload = { habits: currentHabits, globalGoal: globalGoal, oneTimeSaves: oneTimeSaves };
         localStorage.setItem('userData', JSON.stringify(payload));
 
-        if (FIREBASE_URL.includes('ВАША_ССЫЛКА')) return;
+        if (FIREBASE_URL.includes('ВАША_ССЫЛКА') || onlyLocal) return;
 
-        const userId = getUserId();
-        fetch(`${FIREBASE_URL}/${userId}.json`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        }).catch(err => console.log('Ошибка синхронизации с облаком'));
+        fetch(`${FIREBASE_URL}/${getUserId()}.json`, {
+            method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+        }).catch(err => console.log('Sync err'));
     }
 
     function resetAllData() {
-        tg.showConfirm('Точно удалить все трекеры и начать сначала?', function(confirmed) {
+        tg.showConfirm('Точно удалить все данные и начать сначала?', function(confirmed) {
             if (confirmed) {
-                currentHabits = [];
-                globalGoal = null;
+                currentHabits = []; globalGoal = null; oneTimeSaves = [];
                 syncToCloud();
                 showAddForm();
-                const cancelBtn = document.querySelector('#add-form button:last-child');
-                if(cancelBtn) cancelBtn.style.display = 'none';
             }
         });
     }
 
-    function showGoalForm() {
-        dashboard.classList.remove('active');
-        addForm.classList.remove('active');
-        goalForm.classList.add('active');
-        
-        document.getElementById('globalGoalInput').value = globalGoal || '';
-        
-        if (globalGoal) {
-            document.getElementById('deleteGoalBtn').style.display = 'block';
-        } else {
-            document.getElementById('deleteGoalBtn').style.display = 'none';
+    // --- ЛОГИКА ИНТЕРФЕЙСА ---
+    function toggleHabit(element) { element.closest('.habit-card').classList.toggle('collapsed'); }
+
+    function renderDashboard() {
+        if (currentHabits.length === 0 && oneTimeSaves.length === 0) {
+            showAddForm();
+            return;
         }
-    }
-
-    function saveGoal() {
-        const val = document.getElementById('globalGoalInput').value;
-        if (val && parseFloat(val) > 0) {
-            globalGoal = parseFloat(val);
-        } else {
-            globalGoal = null;
-        }
-        syncToCloud();
-        showDashboard();
-    }
-
-    function deleteGoal() {
-        globalGoal = null;
-        syncToCloud();
-        showDashboard();
-    }
-
-    function toggleHabit(element) {
-        const card = element.closest('.habit-card');
-        card.classList.toggle('collapsed');
-    }
-
-    function setupLongPress(element, index) {
-        let pressTimer = null;
-        let isLongPress = false;
-        const startPress = () => { isLongPress = false; pressTimer = setTimeout(() => { isLongPress = true; showHabitMenu(index); }, 500); };
-        const cancelPress = () => { clearTimeout(pressTimer); };
         
-        element.addEventListener('mousedown', startPress);
-        element.addEventListener('touchstart', startPress, {passive: true});
-        element.addEventListener('mouseup', cancelPress);
-        element.addEventListener('mouseleave', cancelPress);
-        element.addEventListener('touchend', cancelPress);
-        element.addEventListener('touchmove', cancelPress);
-        element.querySelector('.habit-title-bar').addEventListener('click', (e) => { if (isLongPress) { e.stopImmediatePropagation(); e.preventDefault(); } });
-    }
-
-    function showHabitMenu(index) {
-        tg.showPopup({
-            title: 'Управление трекером',
-            message: 'Выберите действие:',
-            buttons: [
-                { id: 'edit', type: 'default', text: 'Изменить' },
-                { id: 'delete', type: 'destructive', text: 'Удалить' },
-                { id: 'cancel', type: 'cancel', text: 'Отмена' }
-            ]
-        }, function(buttonId) {
-            if (buttonId === 'delete') deleteHabit(index);
-            else if (buttonId === 'edit') editHabit(index);
-        });
-    }
-
-    function deleteHabit(index) {
-        tg.showConfirm('Точно удалить этот трекер?', function(confirmed) {
-            if (confirmed) {
-                currentHabits.splice(index, 1);
-                syncToCloud();
-                
-                if (currentHabits.length > 0) {
-                    renderHabits(currentHabits);
-                    showDashboard();
-                } else {
-                    showAddForm();
-                    const cancelBtn = document.querySelector('#add-form button:last-child');
-                    if(cancelBtn) cancelBtn.style.display = 'none';
-                }
-            }
-        });
-    }
-
-    function editHabit(index) {
-        const habit = currentHabits[index];
-        document.getElementById('habitName').value = habit.name;
-        
-        selectedDateValue = habit.date;
-        const dObj = new Date(habit.date);
-        document.getElementById('startDateDisplay').value = `${dObj.getDate()} ${monthsFullNames[dObj.getMonth()]} ${dObj.getFullYear()}`;
-
-        document.getElementById('dailyAmount').value = habit.amount;
-        
-        document.getElementById('formTitle').textContent = 'Изменить трекер';
-        editingIndex = index;
-        showAddForm();
-        const cancelBtn = document.querySelector('#add-form button:last-child');
-        if(cancelBtn) cancelBtn.style.display = 'block';
-    }
-
-    function renderHabits(habits) {
+        switchScreen('dashboard');
         habitsListEl.innerHTML = '';
+        impulsesListEl.innerHTML = '';
         let grandTotal = 0;
         const today = new Date();
         today.setHours(0,0,0,0);
 
-        habits.forEach((habit, index) => {
+        // 1. Отрисовка привычек
+        currentHabits.forEach((habit, index) => {
             const startDate = new Date(habit.date);
             startDate.setHours(0,0,0,0);
-            const diffTime = today - startDate;
-            let diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-            if (diffDays < 0) diffDays = 0;
+            let diffDays = Math.max(0, Math.floor((today - startDate) / (1000 * 60 * 60 * 24)));
             const totalSaved = diffDays * parseFloat(habit.amount);
             grandTotal += totalSaved;
 
-            const habitHTML = `
+            habitsListEl.innerHTML += `
                 <div class="habit-card" id="habit-card-${index}">
                     <div class="habit-title-bar" onclick="toggleHabit(this)">
                         <span>${habit.name}</span>
@@ -591,29 +373,53 @@
                     <div class="habit-content">
                         <div class="habit-stats-row">
                             <div class="stat-box stat-days">
-                                <div class="stat-label">Дней</div>
-                                <span class="stat-value">${diffDays}</span>
+                                <div class="stat-label">Дней</div><span class="stat-value">${diffDays}</span>
                             </div>
                             <div class="stat-box stat-money">
-                                <div class="stat-label">Сэкономлено</div>
-                                <span class="stat-value">${totalSaved.toLocaleString('ru-RU')} ₽</span>
+                                <div class="stat-label">Сэкономлено</div><span class="stat-value">${totalSaved.toLocaleString('ru-RU')} ₽</span>
                             </div>
                         </div>
                     </div>
-                </div>
-            `;
-            habitsListEl.innerHTML += habitHTML;
+                </div>`;
         });
 
+        // Привязываем долгое нажатие
+        currentHabits.forEach((_, index) => setupLongPress(document.getElementById(`habit-card-${index}`), index));
+
+        // 2. Отрисовка разовых отказов (импульсов)
+        if (oneTimeSaves.length > 0) {
+            impulsesContainer.style.display = 'block';
+            // Обратная сортировка, чтобы новые были сверху
+            [...oneTimeSaves].reverse().forEach((impulse, reversedIndex) => {
+                const originalIndex = oneTimeSaves.length - 1 - reversedIndex;
+                grandTotal += parseFloat(impulse.amount);
+                
+                const dObj = new Date(impulse.date);
+                const dateStr = `${String(dObj.getDate()).padStart(2, '0')}.${String(dObj.getMonth()+1).padStart(2, '0')}.${dObj.getFullYear()}`;
+                
+                impulsesListEl.innerHTML += `
+                    <div class="impulse-item">
+                        <div class="impulse-info">
+                            <span class="impulse-name">${impulse.name}</span>
+                            <span class="impulse-date">${dateStr}</span>
+                        </div>
+                        <div class="impulse-right">
+                            <span class="impulse-amount">+${parseFloat(impulse.amount).toLocaleString('ru-RU')} ₽</span>
+                            <span class="impulse-delete" onclick="deleteImpulse(${originalIndex})">✕</span>
+                        </div>
+                    </div>`;
+            });
+        } else {
+            impulsesContainer.style.display = 'none';
+        }
+
+        // 3. Общий блок и прогресс бар
         totalSavedAmountEl.textContent = grandTotal.toLocaleString('ru-RU') + ' ₽';
         totalCardContainer.style.display = 'block';
 
         if (globalGoal && parseFloat(globalGoal) > 0) {
             const goal = parseFloat(globalGoal);
             let percent = (grandTotal / goal) * 100;
-            const isCompleted = percent >= 100;
-            const displayPercent = percent > 100 ? 100 : percent;
-
             globalProgressContainer.style.display = 'block';
             globalProgressContainer.innerHTML = `
                 <div class="progress-wrapper">
@@ -622,52 +428,19 @@
                         <span>${Math.floor(percent)}%</span>
                     </div>
                     <div class="progress-track">
-                        <div class="progress-fill ${isCompleted ? 'completed' : ''}" style="width: ${displayPercent}%"></div>
+                        <div class="progress-fill ${percent >= 100 ? 'completed' : ''}" style="width: ${Math.min(percent, 100)}%"></div>
                     </div>
-                </div>
-            `;
+                </div>`;
             goalBtn.textContent = 'Изменить цель';
         } else {
             globalProgressContainer.style.display = 'none';
             goalBtn.textContent = 'Добавить цель';
         }
-
-        habits.forEach((_, index) => {
-            const cardEl = document.getElementById(`habit-card-${index}`);
-            if (cardEl) setupLongPress(cardEl, index);
-        });
     }
 
-    function saveHabit() {
-        const name = document.getElementById('habitName').value;
-        const date = selectedDateValue;
-        const amount = document.getElementById('dailyAmount').value;
-
-        if (!name || !date || !amount) { tg.showAlert('Пожалуйста, заполните все поля!'); return; }
-
-        let habits = [...currentHabits];
-        if (editingIndex !== null) {
-            habits[editingIndex] = { name: name, date: date, amount: amount };
-            editingIndex = null;
-        } else {
-            habits.push({ name: name, date: date, amount: amount });
-        }
-        
-        currentHabits = habits;
-        syncToCloud();
-        
-        document.getElementById('habitName').value = '';
-        document.getElementById('dailyAmount').value = '';
-        document.getElementById('formTitle').textContent = 'Новая причина экономии';
-
-        renderHabits(currentHabits);
-        showDashboard();
-    }
-
-    function showAddForm() { 
-        dashboard.classList.remove('active'); 
-        goalForm.classList.remove('active');
-        addForm.classList.add('active');
+    // --- УПРАВЛЕНИЕ ПРИВЫЧКАМИ ---
+    function showAddForm() {
+        switchScreen('add-form');
         if (editingIndex === null && !document.getElementById('startDateDisplay').value) {
             const today = new Date();
             selectedDateValue = today.toISOString().split('T')[0];
@@ -675,13 +448,86 @@
         }
     }
 
-    function showDashboard() {
-        if (!currentHabits || currentHabits.length === 0) return; 
+    function saveHabit() {
+        const name = document.getElementById('habitName').value, amount = document.getElementById('dailyAmount').value;
+        if (!name || !selectedDateValue || !amount) { tg.showAlert('Пожалуйста, заполните все поля!'); return; }
+
+        if (editingIndex !== null) currentHabits[editingIndex] = { name, date: selectedDateValue, amount };
+        else currentHabits.push({ name, date: selectedDateValue, amount });
+        
+        syncToCloud();
+        document.getElementById('habitName').value = ''; document.getElementById('dailyAmount').value = '';
+        document.getElementById('formTitle').textContent = 'Новая причина экономии';
         editingIndex = null;
-        addForm.classList.remove('active');
-        goalForm.classList.remove('active');
-        dashboard.classList.add('active');
-        renderHabits(currentHabits);
+        renderDashboard();
+    }
+
+    function editHabit(index) {
+        const habit = currentHabits[index];
+        document.getElementById('habitName').value = habit.name;
+        selectedDateValue = habit.date;
+        const dObj = new Date(habit.date);
+        document.getElementById('startDateDisplay').value = `${dObj.getDate()} ${monthsFullNames[dObj.getMonth()]} ${dObj.getFullYear()}`;
+        document.getElementById('dailyAmount').value = habit.amount;
+        document.getElementById('formTitle').textContent = 'Изменить трекер';
+        editingIndex = index;
+        showAddForm();
+    }
+
+    function deleteHabit(index) {
+        tg.showConfirm('Точно удалить этот трекер?', function(confirmed) {
+            if (confirmed) { currentHabits.splice(index, 1); syncToCloud(); renderDashboard(); }
+        });
+    }
+
+    // --- УПРАВЛЕНИЕ РАЗОВЫМИ ОТКАЗАМИ ---
+    function showImpulseForm() { switchScreen('impulse-form'); }
+
+    function saveImpulse() {
+        const name = document.getElementById('impulseName').value;
+        const amount = document.getElementById('impulseAmount').value;
+        if (!name || !amount) { tg.showAlert('Заполните все поля!'); return; }
+
+        const today = new Date().toISOString();
+        oneTimeSaves.push({ name, amount, date: today });
+        syncToCloud();
+        
+        document.getElementById('impulseName').value = ''; document.getElementById('impulseAmount').value = '';
+        // Автоматически открываем свернутую вкладку, чтобы человек увидел результат
+        document.getElementById('impulsesCard').classList.remove('collapsed');
+        renderDashboard();
+    }
+
+    function deleteImpulse(index) {
+        tg.showConfirm('Удалить эту запись?', function(confirmed) {
+            if (confirmed) { oneTimeSaves.splice(index, 1); syncToCloud(); renderDashboard(); }
+        });
+    }
+
+    // --- УПРАВЛЕНИЕ ЦЕЛЬЮ ---
+    function showGoalForm() {
+        switchScreen('goal-form');
+        document.getElementById('globalGoalInput').value = globalGoal || '';
+        document.getElementById('deleteGoalBtn').style.display = globalGoal ? 'block' : 'none';
+    }
+
+    function saveGoal() {
+        const val = document.getElementById('globalGoalInput').value;
+        globalGoal = (val && parseFloat(val) > 0) ? parseFloat(val) : null;
+        syncToCloud(); renderDashboard();
+    }
+
+    function deleteGoal() { globalGoal = null; syncToCloud(); renderDashboard(); }
+    function showDashboard() { editingIndex = null; renderDashboard(); }
+
+    // Долгое нажатие для привычек
+    function setupLongPress(element, index) {
+        let pressTimer = null, isLongPress = false;
+        const startPress = () => { isLongPress = false; pressTimer = setTimeout(() => { isLongPress = true; showHabitMenu(index); }, 500); };
+        const cancelPress = () => clearTimeout(pressTimer);
+        element.addEventListener('mousedown', startPress); element.addEventListener('touchstart', startPress, {passive: true});
+        ['mouseup','mouseleave','touchend','touchmove'].forEach(ev => element.addEventListener(ev, cancelPress));
+        element.querySelector('.habit-title-bar').addEventListener('click', (e) => { if (isLongPress) { e.stopImmediatePropagation(); e.preventDefault(); } });
     }
 
     loadApp();
